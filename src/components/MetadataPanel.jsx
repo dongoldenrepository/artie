@@ -15,6 +15,8 @@ export default function MetadataPanel({
 }) {
   function setEditing(val) { onEditingChange?.(val) }
   const [form, setForm] = useState({})
+  const [originalForm, setOriginalForm] = useState({})
+  const [isDirty, setIsDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [imageFile, setImageFile] = useState(null)
@@ -76,7 +78,7 @@ export default function MetadataPanel({
     if (!artwork) return
     const cfMap = {}
     artwork.custom_fields?.forEach(f => { cfMap[f.field_id] = f.value || '' })
-    setForm({
+    const initial = {
       title: artwork.title || '',
       medium: artwork.medium || '',
       size: artwork.size || '',
@@ -89,7 +91,10 @@ export default function MetadataPanel({
       showings: artwork.showings ? JSON.parse(JSON.stringify(artwork.showings)) : [],
       awards: artwork.awards ? JSON.parse(JSON.stringify(artwork.awards)) : [],
       custom_values: cfMap,
-    })
+    }
+    setForm(initial)
+    setOriginalForm(initial)
+    setIsDirty(false)
     setError(null)
   }, [artwork?.id])
 
@@ -120,6 +125,7 @@ export default function MetadataPanel({
       setEditing(false)
       setImageFile(null)
       setImagePreview(null)
+      setIsDirty(false)
       onSaved()
     } catch (e) {
       setUploading(false)
@@ -130,16 +136,15 @@ export default function MetadataPanel({
   }
 
   function setField(k, v) {
-    setForm(f => ({ ...f, [k]: v }))
+    setForm(f => { const next = { ...f, [k]: v }; setIsDirty(JSON.stringify(next) !== JSON.stringify(originalForm)); return next })
   }
 
   function toggleGenre(id) {
-    setForm(f => ({
-      ...f,
-      genres: f.genres.includes(id)
-        ? f.genres.filter(x => x !== id)
-        : [...f.genres, id]
-    }))
+    setForm(f => {
+      const next = { ...f, genres: f.genres.includes(id) ? f.genres.filter(x => x !== id) : [...f.genres, id] }
+      setIsDirty(JSON.stringify(next) !== JSON.stringify(originalForm))
+      return next
+    })
   }
 
   if (!artwork) return null
@@ -167,8 +172,8 @@ export default function MetadataPanel({
             )}
             {editing && (
               <>
-                <button className="btn btn-ghost" onClick={() => { setEditing(false); setError(null) }}>Cancel</button>
-                <button className="btn btn-primary" disabled={saving || uploading} onClick={handleSave}>
+                <button className="btn btn-ghost" onClick={() => { setEditing(false); setError(null); setIsDirty(false) }}>Cancel</button>
+                <button className="btn btn-primary" disabled={saving || uploading || (!isDirty && !imageFile)} style={{ opacity: (!isDirty && !imageFile) ? 0.4 : 1 }} onClick={handleSave}>
                   {uploading ? 'Uploading…' : saving ? 'Saving…' : 'Save'}
                 </button>
               </>
