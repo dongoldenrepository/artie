@@ -158,11 +158,12 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 4 }}>
             <div style={{ flex: 1 }}>
               <label>Default Medium</label>
-              <input
-                value={defaultMedium}
-                onChange={e => setDefaultMedium(e.target.value)}
-                placeholder="e.g. Oil on Canvas, Watercolor, Photograph"
-              />
+              <select value={defaultMedium} onChange={e => setDefaultMedium(e.target.value)}>
+                <option value="">— None —</option>
+                {allGenres.filter(g => g.tag_type === 'medium' && g.enabled).map(g => (
+                  <option key={g.id} value={g.name}>{g.name}</option>
+                ))}
+              </select>
             </div>
             <button className="btn btn-primary" disabled={saving} onClick={saveSettings}
               style={{ flexShrink: 0, alignSelf: 'flex-end' }}>
