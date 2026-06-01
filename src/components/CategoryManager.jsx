@@ -59,7 +59,13 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
 
   useEffect(() => {
     api.getAllGenres({ artist_id: artistId })
-      .then(r => setAllGenres(r.genres || []))
+      .then(r => {
+        const genres = r.genres || []
+        setAllGenres(genres)
+        // Sync defaultMedium — if saved value exists in medium tags, keep it; otherwise clear
+        const mediumNames = genres.filter(g => g.tag_type === 'medium' && g.enabled).map(g => g.name)
+        setDefaultMedium(prev => mediumNames.includes(prev) ? prev : (currentArtist?.default_medium && mediumNames.includes(currentArtist.default_medium) ? currentArtist.default_medium : ''))
+      })
       .catch(() => {})
   }, [artistId])
 
