@@ -11,7 +11,8 @@ const DATE_FMT  = v => v || '—'
 export default function MetadataPanel({
   artwork, isAdmin, adminToken, isOpen,
   editing = false, onEditingChange,
-  onToggle, onClose, onSaved
+  onToggle, onClose, onSaved,
+  extraImages: extraImagesProp = [], onExtraImagesChange
 }) {
   function setEditing(val) { onEditingChange?.(val) }
   const [form, setForm] = useState({})
@@ -28,10 +29,10 @@ export default function MetadataPanel({
   const [editingPrintId, setEditingPrintId] = useState(null)
   const [editingPrint, setEditingPrint] = useState(null)
 
-  // Extra images
-  const [extraImages, setExtraImages] = useState(artwork?.extra_images || [])
+  // Extra images — managed by parent (ArtworkDetail)
+  const extraImages = extraImagesProp
+  const setExtraImages = onExtraImagesChange || (() => {})
   const [uploadingExtra, setUploadingExtra] = useState(false)
-  const extraFileRef = { current: null }
 
   // Is this artwork printable? Check if any medium tag is Photography, Digital Creation, or Printmaking
   const PRINTABLE_MEDIUMS = ['Photography', 'Digital Creation', 'Printmaking']
@@ -101,7 +102,6 @@ export default function MetadataPanel({
     setOriginalForm(initial)
     setIsDirty(false)
     setError(null)
-    setExtraImages(artwork?.extra_images || [])
   }, [artwork?.id])
 
   function handleImagePick(e) {

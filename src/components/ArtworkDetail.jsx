@@ -9,16 +9,19 @@ export default function ArtworkDetail({
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing]     = useState(false)
   const [activeIdx, setActiveIdx] = useState(0)
+  const [extraImages, setExtraImages] = useState(artwork?.extra_images || [])
+
+  // Sync extra images when artwork changes
+  useEffect(() => {
+    setExtraImages(artwork?.extra_images || [])
+    setActiveIdx(0)
+  }, [artwork?.id])
 
   // Build image list: main image first, then extra images
-  const extraImages = artwork?.extra_images || []
   const allImages = [
     ...(artwork?.image_key ? [{ key: artwork.image_key, id: 'main' }] : []),
     ...extraImages.map(i => ({ key: i.image_key, id: i.id, caption: i.caption }))
   ]
-
-  // Reset active image when artwork changes
-  useEffect(() => { setActiveIdx(0) }, [artwork?.id])
 
   // Close on Escape, navigate on arrow keys
   const handleKey = useCallback((e) => {
@@ -141,6 +144,8 @@ export default function ArtworkDetail({
         editing={editing}
         onEditingChange={setEditing}
         onToggle={() => setPanelOpen(o => !o)}
+        extraImages={extraImages}
+        onExtraImagesChange={setExtraImages}
         onClose={onClose}
         onSaved={onSaved}
       />
