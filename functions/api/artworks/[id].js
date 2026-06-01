@@ -50,6 +50,11 @@ export async function onRequestGet({ env, params }) {
       'SELECT * FROM prints WHERE artwork_id = ? ORDER BY created_at DESC'
     ).bind(id).all()
 
+    // Extra images
+    const extraImages = await env.DB.prepare(
+      'SELECT * FROM artwork_images WHERE artwork_id = ? ORDER BY sort_order, id'
+    ).bind(id).all()
+
     return Response.json({
       ...artwork,
       genres: genresRes.results,
@@ -57,6 +62,7 @@ export async function onRequestGet({ env, params }) {
       awards: awards.results,
       custom_fields: customVals.results,
       prints: prints.results,
+      extra_images: extraImages.results,
     })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })

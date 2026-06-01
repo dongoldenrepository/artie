@@ -8,6 +8,17 @@ export default function ArtworkDetail({
 }) {
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing]     = useState(false)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  // Build image list: main image first, then extra images
+  const extraImages = artwork?.extra_images || []
+  const allImages = [
+    ...(artwork?.image_key ? [{ key: artwork.image_key, id: 'main' }] : []),
+    ...extraImages.map(i => ({ key: i.image_key, id: i.id, caption: i.caption }))
+  ]
+
+  // Reset active image when artwork changes
+  useEffect(() => { setActiveIdx(0) }, [artwork?.id])
 
   // Close on Escape, navigate on arrow keys
   const handleKey = useCallback((e) => {
@@ -40,7 +51,7 @@ export default function ArtworkDetail({
   }
 
   if (!artwork) return null
-  const src = imgSrc(artwork.image_key)
+  const activeSrc = allImages[activeIdx] ? imgSrc(allImages[activeIdx].key) : null
 
   // Pass through allGenres for the edit form
   const enriched = { ...artwork, _allGenres: artwork._allGenres }
@@ -74,12 +85,31 @@ export default function ArtworkDetail({
         </>
       )}
 
-      {/* Main image */}
+      {/* Main image + thumbnail strip */}
       <div className={`detail-image-area ${panelOpen ? 'panel-open' : ''}`}>
-        {src
-          ? <img className="detail-image" src={src} alt={artwork.title} />
+        {activeSrc
+          ? <img className="detail-image" src={activeSrc} alt={artwork.title} />
           : <div style={{ color: '#888', fontSize: 72 }}>🖼</div>
         }
+        {allImages.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', gap: 6, padding: '6px 10px',
+            background: 'rgba(0,0,0,0.55)', borderRadius: 8, backdropFilter: 'blur(4px)'
+          }}>
+            {allImages.map((img, idx) => (
+              <button key={img.id} onClick={() => setActiveIdx(idx)} style={{
+                width: 52, height: 40, padding: 0, border: 'none', borderRadius: 4,
+                outline: idx === activeIdx ? '2px solid #f0ece4' : '2px solid transparent',
+                cursor: 'pointer', overflow: 'hidden', flexShrink: 0, opacity: idx === activeIdx ? 1 : 0.6,
+                transition: 'opacity 0.15s, outline 0.15s'
+              }}>
+                <img src={imgSrc(img.key)} alt={img.caption || `View ${idx + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Title bar (shown when panel is closed) */}

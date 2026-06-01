@@ -116,6 +116,23 @@ export const api = {
     headers: { 'X-Admin-Token': token },
   }),
 
+  // Artwork extra images
+  getArtworkImages: (artworkId) => req(`/artwork-images?artwork_id=${artworkId}`),
+  addArtworkImage: (data, token) => req('/artwork-images', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    body: JSON.stringify(data),
+  }),
+  deleteArtworkImage: (id, token) => req(`/artwork-images/${id}`, {
+    method: 'DELETE',
+    headers: { 'X-Admin-Token': token },
+  }),
+  updateArtworkImage: (id, data, token) => req(`/artwork-images/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    body: JSON.stringify(data),
+  }),
+
   // Auth
   login: (password) => req('/auth/login', {
     method: 'POST',

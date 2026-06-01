@@ -28,6 +28,11 @@ export default function MetadataPanel({
   const [editingPrintId, setEditingPrintId] = useState(null)
   const [editingPrint, setEditingPrint] = useState(null)
 
+  // Extra images
+  const [extraImages, setExtraImages] = useState(artwork?.extra_images || [])
+  const [uploadingExtra, setUploadingExtra] = useState(false)
+  const extraFileRef = { current: null }
+
   // Is this artwork printable? Check if any medium tag is Photography, Digital Creation, or Printmaking
   const PRINTABLE_MEDIUMS = ['Photography', 'Digital Creation', 'Printmaking']
   const isPrintable = artwork?.genres?.some(g => g.tag_type === 'medium' && PRINTABLE_MEDIUMS.includes(g.name))
@@ -96,6 +101,7 @@ export default function MetadataPanel({
     setOriginalForm(initial)
     setIsDirty(false)
     setError(null)
+    setExtraImages(artwork?.extra_images || [])
   }, [artwork?.id])
 
   function handleImagePick(e) {
@@ -103,6 +109,25 @@ export default function MetadataPanel({
     if (!file) return
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
+  }
+
+  async function handleExtraImageUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingExtra(true)
+    try {
+      const res = await api.uploadImage(file, adminToken)
+      const img = await api.addArtworkImage({ artwork_id: artwork.id, image_key: res.key, sort_order: extraImages.length }, adminToken)
+      setExtraImages(prev => [...prev, { id: img.id, image_key: res.key, sort_order: prev.length }])
+    } catch (e) { setError(e.message) }
+    finally { setUploadingExtra(false) }
+  }
+
+  async function handleDeleteExtraImage(id) {
+    try {
+      await api.deleteArtworkImage(id, adminToken)
+      setExtraImages(prev => prev.filter(i => i.id !== id))
+    } catch (e) { setError(e.message) }
   }
 
   async function handleSave() {
@@ -202,6 +227,40 @@ export default function MetadataPanel({
             />
           : <ViewFields artwork={artwork} />
         }
+
+        {/* Extra images — admin upload/manage, always visible as thumbnails */}
+        {(extraImages.length > 0 || editing) && (
+          <div style={{ marginBottom: 16 }}>
+            <div className="meta-section-title">Additional Views</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {extraImages.map(img => (
+                <div key={img.id} style={{ position: 'relative', width: 72, height: 56 }}>
+                  <img src={imgSrc(img.image_key)} alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
+                  {editing && (
+                    <button onClick={() => handleDeleteExtraImage(img.id)} style={{
+                      position: 'absolute', top: -6, right: -6, width: 18, height: 18,
+                      borderRadius: '50%', background: '#b91c1c', color: '#fff',
+                      border: 'none', cursor: 'pointer', fontSize: 11, lineHeight: '18px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
+                    }}>✕</button>
+                  )}
+                </div>
+              ))}
+              {editing && (
+                <label style={{
+                  width: 72, height: 56, border: '1px dashed var(--border)', borderRadius: 4,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'var(--text-muted)', fontSize: 22, flexShrink: 0
+                }}>
+                  {uploadingExtra ? '…' : '+'}
+                  <input type="file" accept="image/*" style={{ display: 'none' }}
+                    onChange={handleExtraImageUpload} />
+                </label>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Prints section (printable category only) */}
         {isPrintable && (
