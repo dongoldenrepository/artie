@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { imgSrc } from '../utils/api'
+import { imgSrc, api } from '../utils/api'
 import MetadataPanel from './MetadataPanel'
 
 export default function ArtworkDetail({
@@ -9,12 +9,15 @@ export default function ArtworkDetail({
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing]     = useState(false)
   const [activeIdx, setActiveIdx] = useState(0)
-  const [extraImages, setExtraImages] = useState(artwork?.extra_images || [])
+  const [extraImages, setExtraImages] = useState([])
 
-  // Sync extra images when artwork changes
+  // Fetch extra images directly from API whenever artwork changes
   useEffect(() => {
-    setExtraImages(artwork?.extra_images || [])
     setActiveIdx(0)
+    if (!artwork?.id) return
+    api.getArtworkImages(artwork.id)
+      .then(r => setExtraImages(r.images || []))
+      .catch(() => setExtraImages([]))
   }, [artwork?.id])
 
   // Build image list: main image first, then extra images
