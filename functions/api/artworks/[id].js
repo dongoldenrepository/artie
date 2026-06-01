@@ -20,7 +20,7 @@ export async function onRequestGet({ env, params }) {
 
     // Genres (style tags)
     const genresRes = await env.DB.prepare(`
-      SELECT g.id, g.name, g.color
+      SELECT g.id, g.name, g.color, g.tag_type
       FROM artwork_genres ag
       JOIN genres g ON ag.category_id = g.id
       WHERE ag.artwork_id = ?
