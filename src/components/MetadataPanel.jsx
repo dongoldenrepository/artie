@@ -26,8 +26,10 @@ export default function MetadataPanel({
   const [editingPrintId, setEditingPrintId] = useState(null)
   const [editingPrint, setEditingPrint] = useState(null)
 
-  // Is this artwork printable? Check is_printable from category (falls back to artwork_type)
-  const isPrintable = artwork?.is_printable === 1 || artwork?.artwork_type === 'photograph'
+  // Is this artwork printable? Check if any medium tag is Photography, Digital Creation, or Printmaking
+  const PRINTABLE_MEDIUMS = ['Photography', 'Digital Creation', 'Printmaking']
+  const isPrintable = artwork?.genres?.some(g => g.tag_type === 'medium' && PRINTABLE_MEDIUMS.includes(g.name))
+    || artwork?.artwork_type === 'photograph' // legacy fallback
 
   // Clear image + print state when artwork changes
   useEffect(() => {

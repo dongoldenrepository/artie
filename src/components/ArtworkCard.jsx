@@ -10,8 +10,10 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete }) {
 
   const src = imgSrc(artwork.image_key)
 
-  // Use category.is_printable to drive print display (falls back to artwork_type for legacy rows)
-  const isPrintable = artwork.is_printable === 1 || artwork.artwork_type === 'photograph'
+  // Printable if any medium tag is Photography, Digital Creation, or Printmaking
+  const PRINTABLE_MEDIUMS = ['Photography', 'Digital Creation', 'Printmaking']
+  const isPrintable = artwork.genres?.some(g => g.tag_type === 'medium' && PRINTABLE_MEDIUMS.includes(g.name))
+    || artwork.artwork_type === 'photograph' // legacy fallback
 
   const priceStr = !isPrintable && artwork.price != null
     ? '$' + Number(artwork.price).toLocaleString()

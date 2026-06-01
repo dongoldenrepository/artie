@@ -48,24 +48,13 @@ function ColorPicker({ value, onChange }) {
   )
 }
 
-export default function CategoryManager({ customFields = [], artistId, adminToken, onClose, onSaved, artists }) {
-  const currentArtist = artists?.find(a => a.id === artistId)
-  const [defaultMedium, setDefaultMedium] = useState(currentArtist?.default_medium || '')
-  const [artistType, setArtistType]       = useState(currentArtist?.artist_type || 'painter')
-  const [settingsSaved, setSettingsSaved] = useState(false)
-
+export default function CategoryManager({ customFields = [], artistId, adminToken, onClose, onSaved }) {
   // Load all genres including disabled ones for management
   const [allGenres, setAllGenres] = useState([])
 
   useEffect(() => {
     api.getAllGenres({ artist_id: artistId })
-      .then(r => {
-        const genres = r.genres || []
-        setAllGenres(genres)
-        // Sync defaultMedium — if saved value exists in medium tags, keep it; otherwise clear
-        const mediumNames = genres.filter(g => g.tag_type === 'medium' && g.enabled).map(g => g.name)
-        setDefaultMedium(prev => mediumNames.includes(prev) ? prev : (currentArtist?.default_medium && mediumNames.includes(currentArtist.default_medium) ? currentArtist.default_medium : ''))
-      })
+      .then(r => setAllGenres(r.genres || []))
       .catch(() => {})
   }, [artistId])
 
@@ -86,17 +75,6 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
   const [newField, setNewField] = useState({ name: '', field_type: 'text' })
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
-
-  async function saveSettings() {
-    setSaving(true); setError(null)
-    try {
-      await api.updateArtist({ id: artistId, default_medium: defaultMedium, artist_type: artistType }, adminToken)
-      setSettingsSaved(true)
-      setTimeout(() => setSettingsSaved(false), 2000)
-      onSaved()
-    } catch (e) { setError(e.message) }
-    finally { setSaving(false) }
-  }
 
   async function addTag(tagType) {
     const tag = newTag[tagType]
@@ -148,34 +126,7 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
         <div className="modal-body">
           {error && <div style={{ color: '#b91c1c', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
-          {/* ── Artist Settings ── */}
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Artist Settings</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-            Default values pre-filled when adding a new artwork.
-          </p>
-          <div className="form-row">
-            <label>Artist Type</label>
-            <select value={artistType} onChange={e => setArtistType(e.target.value)}>
-              <option value="painter">Painter (single-piece works)</option>
-              <option value="photographer">Photographer (prints per image)</option>
-              <option value="both">Both — Painter &amp; Photographer</option>
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 4 }}>
-            <div style={{ flex: 1 }}>
-              <label>Default Medium</label>
-              <select value={defaultMedium} onChange={e => setDefaultMedium(e.target.value)}>
-                <option value="">— None —</option>
-                {allGenres.filter(g => g.tag_type === 'medium' && g.enabled).map(g => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
-                ))}
-              </select>
-            </div>
-            <button className="btn btn-primary" disabled={saving} onClick={saveSettings}
-              style={{ flexShrink: 0, alignSelf: 'flex-end' }}>
-              {settingsSaved ? '✓ Saved' : 'Save'}
-            </button>
-          </div>
+
 
           {divider}
 

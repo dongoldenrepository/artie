@@ -16,19 +16,11 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ artists, filterArtist, onAddArtwork, onAddPhoto, onCategories }) {
-  const artistType = artists.find(a => a.id === (filterArtist || artists[0]?.id))?.artist_type || 'painter'
-  const showArtwork = artistType !== 'photographer'
-  const showPhoto   = artistType !== 'painter'
+function AdminBar({ onAddArtwork, onCategories }) {
   return (
     <div className="admin-bar">
       <span className="admin-bar-label">✦ Admin Mode</span>
-      {showArtwork && (
-        <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
-      )}
-      {showPhoto && (
-        <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
-      )}
+      <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
       <button className="btn btn-ghost" onClick={onCategories}>⚙ Tags & Fields</button>
     </div>
   )
@@ -53,7 +45,6 @@ export default function App() {
   const [isAdmin, setIsAdmin]           = useState(false)
   const [showLogin, setShowLogin]       = useState(false)
   const [showUpload, setShowUpload]     = useState(false)
-  const [uploadType, setUploadType]     = useState('artwork') // 'artwork' or 'photograph'
   const [showCategories, setShowCategories] = useState(false)
 
   const { toast, show: showToast } = useToast()
@@ -180,10 +171,7 @@ export default function App() {
 
       {/* ── Admin Bar ── */}
       {isAdmin && <AdminBar
-        artists={artists}
-        filterArtist={filterArtist}
-        onAddArtwork={() => { setUploadType('artwork'); setShowUpload(true) }}
-        onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
+        onAddArtwork={() => setShowUpload(true)}
         onCategories={() => setShowCategories(true)}
       />}
 
@@ -281,11 +269,9 @@ export default function App() {
           genres={genres}
           customFields={customFields}
           artistId={filterArtist || (artists[0]?.id || 1)}
-          defaultMedium={artists.find(a => a.id === (filterArtist || artists[0]?.id))?.default_medium || ''}
-          artworkType={uploadType}
           adminToken={adminToken}
           onClose={() => setShowUpload(false)}
-          onSaved={() => { loadAll(); showToast(uploadType === 'photograph' ? 'Photo added!' : 'Artwork added!') }}
+          onSaved={() => { loadAll(); showToast('Artwork added!') }}
         />
       )}
 
@@ -294,7 +280,6 @@ export default function App() {
           customFields={customFields}
           artistId={filterArtist || (artists[0]?.id || 1)}
           adminToken={adminToken}
-          artists={artists}
           onClose={() => setShowCategories(false)}
           onSaved={loadAll}
         />
