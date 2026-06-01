@@ -103,7 +103,7 @@ export default function ArtworkDetail({
         {allImages.length > 1 && (
           <div style={{
             display: 'flex', gap: 6, padding: '8px 10px', flexShrink: 0,
-            background: 'rgba(0,0,0,0.7)', borderRadius: 8, margin: '0 auto 80px',
+            background: 'rgba(0,0,0,0.7)', borderRadius: 8, margin: '0 0 80px 20px',
             backdropFilter: 'blur(4px)', position: 'relative', zIndex: 10
           }}>
             {allImages.map((img, idx) => (
