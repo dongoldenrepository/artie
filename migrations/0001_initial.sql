@@ -105,28 +105,7 @@ BEGIN
 END;
 
 -- ----------------------------------------------------------------
--- Seed data: two default artists (update names/emails as needed)
+-- Seed data: one default artist (name/email updated during setup)
 -- ----------------------------------------------------------------
 INSERT OR IGNORE INTO artists (id, name, email) VALUES
-  (1, 'Artist One', 'artist1@example.com'),
-  (2, 'Artist Two', 'artist2@example.com');
-
--- Default categories for Artist 1
-INSERT OR IGNORE INTO categories (artist_id, name, color) VALUES
-  (1, 'Portrait',    '#ef4444'),
-  (1, 'Landscape',   '#22c55e'),
-  (1, 'Wildlife',    '#f59e0b'),
-  (1, 'Abstract',    '#8b5cf6'),
-  (1, 'Still Life',  '#3b82f6'),
-  (1, 'Whimsical',   '#ec4899'),
-  (1, 'Floral',      '#f97316'),
-  (1, 'Seascape',    '#06b6d4');
-
--- Default categories for Artist 2
-INSERT OR IGNORE INTO categories (artist_id, name, color) VALUES
-  (2, 'Portrait',    '#ef4444'),
-  (2, 'Landscape',   '#22c55e'),
-  (2, 'Nature',      '#f59e0b'),
-  (2, 'Abstract',    '#8b5cf6'),
-  (2, 'Architecture','3b82f6'),
-  (2, 'Street',      '#6b7280');
+  (1, 'My Art Studio', 'artist@example.com');
