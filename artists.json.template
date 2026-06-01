@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "don",
+    "name": "Don Golden Photography",
+    "cloudflare_account_id": "PASTE-ACCOUNT-ID",
+    "d1_database_name": "artie-don-db",
+    "d1_database_id": "PASTE-D1-ID",
+    "r2_bucket": "artie-don-images",
+    "pages_project": "artie-don",
+    "url": "https://artie-don.pages.dev"
+  },
+  {
+    "slug": "kathy",
+    "name": "Kathy Golden Fine Art",
+    "cloudflare_account_id": "PASTE-ACCOUNT-ID",
+    "d1_database_name": "artie-kathy-db",
+    "d1_database_id": "PASTE-D1-ID",
+    "r2_bucket": "artie-kathy-images",
+    "pages_project": "artie-kathy",
+    "url": "https://artie-kathy.pages.dev"
+  }
+]

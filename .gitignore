@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.env
+*.local
+
+# Per-artist config — never commit these
+wrangler.toml
+artists.json
+
