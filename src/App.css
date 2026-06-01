@@ -318,6 +318,7 @@ label { font-size: 13px; font-weight: 500; color: var(--text-muted); display: bl
 
 .detail-image-area {
   flex: 1;
+  position: relative;
   display: flex; align-items: center; justify-content: center;
   padding: 56px 80px 20px;
   transition: padding-bottom 0.4s ease;
