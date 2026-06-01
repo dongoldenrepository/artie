@@ -89,16 +89,19 @@ export default function ArtworkDetail({
       )}
 
       {/* Main image + thumbnail strip */}
-      <div className={`detail-image-area ${panelOpen ? 'panel-open' : ''}`}>
-        {activeSrc
-          ? <img className="detail-image" src={activeSrc} alt={artwork.title} />
-          : <div style={{ color: '#888', fontSize: 72 }}>🖼</div>
-        }
+      <div className={`detail-image-area ${panelOpen ? 'panel-open' : ''}`}
+        style={{ flexDirection: 'column', gap: 0 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, width: '100%' }}>
+          {activeSrc
+            ? <img className="detail-image" src={activeSrc} alt={artwork.title} />
+            : <div style={{ color: '#888', fontSize: 72 }}>🖼</div>
+          }
+        </div>
         {allImages.length > 1 && (
           <div style={{
-            position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', gap: 6, padding: '6px 10px',
-            background: 'rgba(0,0,0,0.55)', borderRadius: 8, backdropFilter: 'blur(4px)'
+            display: 'flex', gap: 6, padding: '8px 10px', flexShrink: 0,
+            background: 'rgba(0,0,0,0.55)', borderRadius: 8, margin: '8px auto',
+            backdropFilter: 'blur(4px)'
           }}>
             {allImages.map((img, idx) => (
               <button key={img.id} onClick={() => setActiveIdx(idx)} style={{
