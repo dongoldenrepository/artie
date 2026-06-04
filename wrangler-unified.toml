@@ -1,0 +1,15 @@
+name = "artie-unified"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+[vars]
+ARTIST_NAME = "Artie"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "artie-unified-db"
+database_id = "b875bbf7-718e-4725-8643-0ec6c0c566d0"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "artie-site-images"
