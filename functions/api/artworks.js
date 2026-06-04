@@ -1,11 +1,11 @@
-// GET /api/artworks?artist_id=1&genre_id=2&search=...
+// GET /api/artworks?genre_id=2&search=...
 export async function onRequestGet({ env, request, data }) {
   try {
     const url = new URL(request.url)
-    const artistId   = url.searchParams.get('artist_id')
-    const genreId    = url.searchParams.get('genre_id')
+    const artistId  = data.artistId
+    const genreId   = url.searchParams.get('genre_id')
     const categoryId = url.searchParams.get('category_id')
-    const search     = url.searchParams.get('search')
+    const search    = url.searchParams.get('search')
 
     let query = `
       SELECT
@@ -23,10 +23,9 @@ export async function onRequestGet({ env, request, data }) {
       LEFT JOIN categories c ON a.category_id = c.id
       LEFT JOIN artwork_genres ag ON a.id = ag.artwork_id
       LEFT JOIN genres g ON ag.category_id = g.id
-      WHERE 1=1`
-    const params = []
+      WHERE a.artist_id = ?`
+    const params = [artistId]
 
-    if (artistId)   { query += ' AND a.artist_id = ?';   params.push(Number(artistId)) }
     if (categoryId) { query += ' AND a.category_id = ?'; params.push(Number(categoryId)) }
     if (search)     { query += ' AND (a.title LIKE ? OR a.medium LIKE ? OR a.description LIKE ?)'; params.push(`%${search}%`, `%${search}%`, `%${search}%`) }
 
@@ -65,7 +64,7 @@ export async function onRequestPost({ env, request, data }) {
     const {
       title, medium, size, price, date_created,
       current_location, description, image_key,
-      is_available = 1, artist_id = 1,
+      is_available = 1,
       artwork_type = 'artwork',
       category_id = null,
       genres = [], custom_values = {}
@@ -73,12 +72,14 @@ export async function onRequestPost({ env, request, data }) {
 
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
 
+    const artistId = data.artistId
+
     const ins = await env.DB.prepare(`
       INSERT INTO artworks
         (artist_id, title, medium, size, price, date_created, current_location, description, image_key, is_available, artwork_type, category_id)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
-      artist_id, title, medium || null, size || null,
+      artistId, title, medium || null, size || null,
       price ?? null, date_created || null,
       current_location || null, description || null,
       image_key || null, is_available, artwork_type,

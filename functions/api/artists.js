@@ -1,25 +1,26 @@
-// GET /api/artists
+// GET /api/artists  — returns the single artist for this subdomain
 // PUT /api/artists  (admin — update artist settings)
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, data }) {
   try {
-    const result = await env.DB.prepare(
-      'SELECT id, name, email, bio, website, default_medium, artist_type, created_at FROM artists ORDER BY id'
-    ).all()
-    return Response.json({ artists: result.results })
+    // In multi-tenant, return just the resolved artist as an array for frontend compatibility
+    const artist = data.artist
+    if (!artist) return Response.json({ artists: [] })
+    const { admin_password, ...safe } = artist
+    return Response.json({ artists: [safe] })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
 
-export async function onRequestPut({ request, env }) {
-  const token = request.headers.get('X-Admin-Token')
-  if (token !== env.ADMIN_PASSWORD) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+export async function onRequestPut({ request, env, data }) {
+  if (!data.isAdmin) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    const { id, default_medium, artist_type } = await request.json()
+    const { default_medium, artist_type } = await request.json()
+    const artistId = data.artistId
     await env.DB.prepare(
       'UPDATE artists SET default_medium=?, artist_type=COALESCE(?,artist_type) WHERE id=?'
-    ).bind(default_medium ?? '', artist_type ?? null, id).run()
+    ).bind(default_medium ?? '', artist_type ?? null, artistId).run()
     return Response.json({ ok: true })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })

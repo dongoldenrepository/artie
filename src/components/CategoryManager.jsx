@@ -53,13 +53,13 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
   const [allGenres, setAllGenres] = useState([])
 
   useEffect(() => {
-    api.getAllGenres({ artist_id: artistId })
+    api.getAllGenres()
       .then(r => setAllGenres(r.genres || []))
       .catch(() => {})
   }, [artistId])
 
   function reloadGenres() {
-    api.getAllGenres({ artist_id: artistId })
+    api.getAllGenres()
       .then(r => setAllGenres(r.genres || []))
       .catch(() => {})
     onSaved()

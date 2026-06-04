@@ -41,7 +41,6 @@ export default function App() {
   // UI state
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [filterGenre, setFilterGenre]         = useState(null)
-  const [filterArtist, setFilterArtist]       = useState(null)
   const [search, setSearch]                   = useState('')
   const [searchScope, setSearchScope]         = useState('title') // 'title' | 'all'
 
@@ -75,17 +74,14 @@ export default function App() {
   const loadAll = useCallback(async () => {
     try {
       const params = {}
-      if (filterArtist) params.artist_id = filterArtist
-      if (filterGenre)  params.genre_id  = filterGenre
-      if (search)       params.search    = search
-      if (search)       params.search_scope = searchScope
-
-      const artistParam = filterArtist ? { artist_id: filterArtist } : {}
+      if (filterGenre) params.genre_id = filterGenre
+      if (search)      params.search   = search
+      if (search)      params.search_scope = searchScope
 
       const [awRes, genreRes, fieldRes, artRes] = await Promise.all([
         api.getArtworks(params),
-        api.getGenres(artistParam),
-        api.getCustomFields(filterArtist || 1),
+        api.getGenres(),
+        api.getCustomFields(),
         api.getArtists(),
       ])
 
@@ -98,7 +94,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [filterArtist, filterGenre, search, searchScope])
+  }, [filterGenre, search, searchScope])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -257,16 +253,6 @@ export default function App() {
         })}
 
         <div className="filter-bar-right">
-          {artists.length > 1 && (
-            <select
-              className="filter-artist-select"
-              value={filterArtist || ''}
-              onChange={e => setFilterArtist(e.target.value ? Number(e.target.value) : null)}
-            >
-              <option value="">All Artists</option>
-              {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          )}
           {!loading && (
             <span className="artwork-count">
               {displayed.length} {displayed.length === 1 ? 'piece' : 'pieces'}
@@ -328,7 +314,7 @@ export default function App() {
         <UploadDialog
           genres={genres}
           customFields={customFields}
-          artistId={filterArtist || (artists[0]?.id || 1)}
+          artistId={artists[0]?.id || 1}
           artworkType={uploadType}
           adminToken={adminToken}
           onClose={() => setShowUpload(false)}
@@ -339,7 +325,7 @@ export default function App() {
       {showCategories && (
         <CategoryManager
           customFields={customFields}
-          artistId={filterArtist || (artists[0]?.id || 1)}
+          artistId={artists[0]?.id || 1}
           adminToken={adminToken}
           onClose={() => setShowCategories(false)}
           onSaved={loadAll}

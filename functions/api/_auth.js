@@ -25,22 +25,18 @@ export async function verifyPassword(password, stored) {
   return computed === hash
 }
 
-// Returns true if the token grants admin access for this site.
-// Priority: master password > DB password > env fallback (only if no DB password set)
-export async function checkAdmin(request, env) {
+// Returns true if the token grants admin access.
+// artist: the resolved artist row (from context.data.artist)
+// Priority: master password > artist DB password > env.ADMIN_PASSWORD fallback
+export async function checkAdmin(request, env, artist) {
   const token = request.headers.get('X-Admin-Token')
   if (!token) return false
 
-  // Master password always works
+  // Master password always works for any artist
   if (env.MASTER_PASSWORD && token === env.MASTER_PASSWORD) return true
 
-  // Look up artist's stored password
-  const artist = await env.DB
-    .prepare('SELECT admin_password FROM artists ORDER BY id LIMIT 1')
-    .first()
-
   if (artist?.admin_password) {
-    // Artist has personalised their password — only DB password (or master) works
+    // Artist has set a personal password — only DB password (or master) works
     return await verifyPassword(token, artist.admin_password)
   }
 

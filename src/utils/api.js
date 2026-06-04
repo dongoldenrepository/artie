@@ -52,14 +52,8 @@ export const api = {
   }),
 
   // Genres (medium / subject / style tags)
-  getGenres: (params = {}) => {
-    const q = new URLSearchParams(params).toString()
-    return req(`/genres${q ? '?' + q : ''}`)
-  },
-  getAllGenres: (params = {}) => {
-    const q = new URLSearchParams({ ...params, show_disabled: '1' }).toString()
-    return req(`/genres?${q}`)
-  },
+  getGenres: () => req('/genres'),
+  getAllGenres: () => req('/genres?show_disabled=1'),
   createGenre: (data, token) => req('/genres', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
@@ -81,7 +75,7 @@ export const api = {
   }),
 
   // Custom fields
-  getCustomFields: (artistId = 1) => req(`/custom-fields?artist_id=${artistId}`),
+  getCustomFields: () => req('/custom-fields'),
   createCustomField: (data, token) => req('/custom-fields', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
