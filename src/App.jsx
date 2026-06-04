@@ -22,7 +22,7 @@ function AdminBar({ onAddArtwork, onAddPhoto, onCategories }) {
       <span className="admin-bar-label">✦ Admin Mode</span>
       <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
       <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
-      <button className="btn btn-ghost" onClick={onCategories}>⚙ Tags & Fields</button>
+      <button className="btn btn-ghost" onClick={onCategories}>⚙ Catalog Settings</button>
     </div>
   )
 }

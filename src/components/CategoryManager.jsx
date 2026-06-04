@@ -119,7 +119,7 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
     <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: 540 }}>
         <div className="modal-header">
-          <h2>Tags &amp; Fields</h2>
+          <h2>Catalog Settings</h2>
           <button className="btn-icon" style={{ fontSize: 20, color: '#888' }} onClick={onClose}>✕</button>
         </div>
 
