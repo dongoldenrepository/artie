@@ -149,10 +149,10 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
 
                 {enabled.map(t => (
                   <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}
+                      onClick={() => toggleTag(t.id, true)}>Disable</button>
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 14 }}>{t.name}</span>
-                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--text-muted)' }}
-                      onClick={() => toggleTag(t.id, true)}>Disable</button>
                   </div>
                 ))}
 
@@ -161,10 +161,10 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Disabled</div>
                     {disabled.map(t => (
                       <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, opacity: 0.5 }}>
+                        <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0 }}
+                          onClick={() => toggleTag(t.id, false)}>Enable</button>
                         <span style={{ width: 12, height: 12, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
                         <span style={{ flex: 1, fontSize: 14 }}>{t.name}</span>
-                        <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }}
-                          onClick={() => toggleTag(t.id, false)}>Enable</button>
                       </div>
                     ))}
                   </div>

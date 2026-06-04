@@ -16,11 +16,12 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ onAddArtwork, onCategories }) {
+function AdminBar({ onAddArtwork, onAddPhoto, onCategories }) {
   return (
     <div className="admin-bar">
       <span className="admin-bar-label">✦ Admin Mode</span>
       <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
+      <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
       <button className="btn btn-ghost" onClick={onCategories}>⚙ Tags & Fields</button>
     </div>
   )
@@ -39,12 +40,14 @@ export default function App() {
   const [filterGenre, setFilterGenre]         = useState(null)
   const [filterArtist, setFilterArtist]       = useState(null)
   const [search, setSearch]                   = useState('')
+  const [searchScope, setSearchScope]         = useState('title') // 'title' | 'all'
 
   // Admin
   const [adminToken, setAdminToken]     = useState(() => sessionStorage.getItem('adminToken'))
   const [isAdmin, setIsAdmin]           = useState(false)
   const [showLogin, setShowLogin]       = useState(false)
   const [showUpload, setShowUpload]     = useState(false)
+  const [uploadType, setUploadType]     = useState('artwork') // 'artwork' | 'photograph'
   const [showCategories, setShowCategories] = useState(false)
 
   const { toast, show: showToast } = useToast()
@@ -70,6 +73,7 @@ export default function App() {
       if (filterArtist) params.artist_id = filterArtist
       if (filterGenre)  params.genre_id  = filterGenre
       if (search)       params.search    = search
+      if (search)       params.search_scope = searchScope
 
       const artistParam = filterArtist ? { artist_id: filterArtist } : {}
 
@@ -89,7 +93,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [filterArtist, filterGenre, search])
+  }, [filterArtist, filterGenre, search, searchScope])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -142,6 +146,9 @@ export default function App() {
 
   const displayed = artworks
 
+  // Only show filter buttons for genres actually used by current artworks
+  const usedGenreIds = new Set(artworks.flatMap(aw => (aw.genres || []).map(g => g.id)))
+
   const siteTitle = artists.length === 1 ? artists[0]?.name : 'Artist Catalog'
 
   return (
@@ -153,10 +160,29 @@ export default function App() {
         <div className="header-search">
           <span className="header-search-icon">🔍</span>
           <input
-            placeholder="Search works…"
+            placeholder={searchScope === 'title' ? 'Search titles…' : 'Search all fields…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
+          {search && (
+            <button
+              className="search-clear-btn"
+              onClick={() => setSearch('')}
+              title="Clear search"
+            >✕</button>
+          )}
+        </div>
+        <div className="search-scope-toggle">
+          <button
+            className={`scope-btn ${searchScope === 'title' ? 'active' : ''}`}
+            onClick={() => setSearchScope('title')}
+            title="Search titles only"
+          >Title</button>
+          <button
+            className={`scope-btn ${searchScope === 'all' ? 'active' : ''}`}
+            onClick={() => setSearchScope('all')}
+            title="Search all text fields"
+          >All Fields</button>
         </div>
 
         {!isAdmin
@@ -171,7 +197,8 @@ export default function App() {
 
       {/* ── Admin Bar ── */}
       {isAdmin && <AdminBar
-        onAddArtwork={() => setShowUpload(true)}
+        onAddArtwork={() => { setUploadType('artwork'); setShowUpload(true) }}
+        onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
         onCategories={() => setShowCategories(true)}
       />}
 
@@ -186,9 +213,9 @@ export default function App() {
           All
         </button>
 
-        {/* Tag filters — grouped by type with dividers */}
+        {/* Tag filters — only show tags used by actual artworks */}
         {['subject', 'medium', 'style'].map(type => {
-          const group = genres.filter(g => g.tag_type === type)
+          const group = genres.filter(g => g.tag_type === type && usedGenreIds.has(g.id))
           if (!group.length) return null
           return group.map(g => (
             <button
@@ -203,16 +230,23 @@ export default function App() {
           ))
         })}
 
-        {artists.length > 1 && (
-          <select
-            className="filter-artist-select"
-            value={filterArtist || ''}
-            onChange={e => setFilterArtist(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">All Artists</option>
-            {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
-        )}
+        <div className="filter-bar-right">
+          {artists.length > 1 && (
+            <select
+              className="filter-artist-select"
+              value={filterArtist || ''}
+              onChange={e => setFilterArtist(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">All Artists</option>
+              {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          )}
+          {!loading && (
+            <span className="artwork-count">
+              {displayed.length} {displayed.length === 1 ? 'piece' : 'pieces'}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── Main Grid ── */}
@@ -269,9 +303,10 @@ export default function App() {
           genres={genres}
           customFields={customFields}
           artistId={filterArtist || (artists[0]?.id || 1)}
+          artworkType={uploadType}
           adminToken={adminToken}
           onClose={() => setShowUpload(false)}
-          onSaved={() => { loadAll(); showToast('Artwork added!') }}
+          onSaved={() => { loadAll(); showToast(uploadType === 'photograph' ? 'Photo added!' : 'Artwork added!') }}
         />
       )}
 
