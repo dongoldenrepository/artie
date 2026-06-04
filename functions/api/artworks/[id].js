@@ -1,9 +1,5 @@
-function isAdmin(request, env) {
-  return request.headers.get('X-Admin-Token') === env.ADMIN_PASSWORD
-}
-
 // GET /api/artworks/:id  — full detail with showings, awards, custom fields
-export async function onRequestGet({ env, params }) {
+export async function onRequestGet({ env, params, data }) {
   try {
     const id = Number(params.id)
 
@@ -70,8 +66,8 @@ export async function onRequestGet({ env, params }) {
 }
 
 // PUT /api/artworks/:id  (admin only)
-export async function onRequestPut({ env, request, params }) {
-  if (!isAdmin(request, env)) {
+export async function onRequestPut({ env, request, params, data }) {
+  if (!data.isAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
@@ -149,8 +145,8 @@ export async function onRequestPut({ env, request, params }) {
 }
 
 // DELETE /api/artworks/:id  (admin only)
-export async function onRequestDelete({ env, request, params }) {
-  if (!isAdmin(request, env)) {
+export async function onRequestDelete({ env, request, params, data }) {
+  if (!data.isAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

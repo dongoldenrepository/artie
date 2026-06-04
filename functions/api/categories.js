@@ -1,9 +1,5 @@
-function isAdmin(request, env) {
-  return request.headers.get('X-Admin-Token') === env.ADMIN_PASSWORD
-}
-
 // GET /api/categories?artist_id=1
-export async function onRequestGet({ env, request }) {
+export async function onRequestGet({ env, request, data }) {
   try {
     const url = new URL(request.url)
     const artistId = url.searchParams.get('artist_id')
@@ -21,8 +17,8 @@ export async function onRequestGet({ env, request }) {
 }
 
 // POST /api/categories  (admin only)
-export async function onRequestPost({ env, request }) {
-  if (!isAdmin(request, env)) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+export async function onRequestPost({ env, request, data }) {
+  if (!data.isAdmin) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const { name, color = '#6b7280', artist_id = 1, is_printable = 0, display_order = 0 } = await request.json()
     if (!name) return Response.json({ error: 'name is required' }, { status: 400 })

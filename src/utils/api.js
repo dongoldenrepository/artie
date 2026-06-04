@@ -139,6 +139,11 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password }),
   }),
+  changePassword: (currentPassword, newPassword) => req('/auth/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': currentPassword },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }),
 
   // Image upload
   uploadImage: async (file, token) => {

@@ -1,4 +1,5 @@
-// Middleware: CORS headers for all /api/* routes
+// Middleware: CORS headers + pre-computed admin status for all /api/* routes
+import { checkAdmin } from './_auth.js'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -8,12 +9,15 @@ const CORS_HEADERS = {
 }
 
 export async function onRequest(context) {
-  const { request, next } = context
+  const { request, next, env } = context
 
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
+
+  // Pre-compute admin status so route handlers don't each repeat the DB lookup
+  context.data.isAdmin = await checkAdmin(request, env)
 
   // Run the handler
   const response = await next()
@@ -24,10 +28,4 @@ export async function onRequest(context) {
     newResponse.headers.set(k, v)
   }
   return newResponse
-}
-
-// Helper exported for use in route handlers
-export function isAdmin(request, env) {
-  const token = request.headers.get('X-Admin-Token')
-  return token && token === env.ADMIN_PASSWORD
 }

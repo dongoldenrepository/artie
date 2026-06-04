@@ -10,9 +10,8 @@ export default function AdminLogin({ onLogin, onClose }) {
     e.preventDefault()
     setLoading(true); setError(null)
     try {
-      const { token } = await api.login(password)
-      sessionStorage.setItem('adminToken', token)
-      onLogin(token)
+      const { token, mustChangePassword } = await api.login(password)
+      onLogin(token, mustChangePassword)
     } catch {
       setError('Incorrect password. Try again.')
       setPassword('')

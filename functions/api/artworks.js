@@ -1,9 +1,5 @@
-function isAdmin(request, env) {
-  return request.headers.get('X-Admin-Token') === env.ADMIN_PASSWORD
-}
-
 // GET /api/artworks?artist_id=1&genre_id=2&search=...
-export async function onRequestGet({ env, request }) {
+export async function onRequestGet({ env, request, data }) {
   try {
     const url = new URL(request.url)
     const artistId   = url.searchParams.get('artist_id')
@@ -61,8 +57,8 @@ export async function onRequestGet({ env, request }) {
 }
 
 // POST /api/artworks  (admin only)
-export async function onRequestPost({ env, request }) {
-  if (!isAdmin(request, env)) {
+export async function onRequestPost({ env, request, data }) {
+  if (!data.isAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

@@ -1,14 +1,36 @@
 // POST /api/auth/login
-// Returns a token (the admin password) that the client stores in sessionStorage.
-// Simple but sufficient for link-sharing / beta access model.
+import { verifyPassword } from '../_auth.js'
 
 export async function onRequestPost({ request, env }) {
   try {
     const { password } = await request.json()
-    if (!password || password !== env.ADMIN_PASSWORD) {
+    if (!password) return Response.json({ error: 'Password required' }, { status: 400 })
+
+    // Master password — always works, no forced change
+    if (env.MASTER_PASSWORD && password === env.MASTER_PASSWORD) {
+      return Response.json({ token: password, success: true, isMaster: true })
+    }
+
+    // Look up artist's DB password
+    const artist = await env.DB
+      .prepare('SELECT admin_password FROM artists ORDER BY id LIMIT 1')
+      .first()
+
+    if (artist?.admin_password) {
+      // Artist has set a personal password
+      const valid = await verifyPassword(password, artist.admin_password)
+      if (!valid) return Response.json({ error: 'Invalid password' }, { status: 401 })
+      return Response.json({ token: password, success: true })
+    }
+
+    // No DB password yet — fall back to env.ADMIN_PASSWORD
+    if (password !== env.ADMIN_PASSWORD) {
       return Response.json({ error: 'Invalid password' }, { status: 401 })
     }
-    return Response.json({ token: env.ADMIN_PASSWORD, success: true })
+
+    // First login with env password — require them to set a personal one
+    return Response.json({ token: password, success: true, mustChangePassword: true })
+
   } catch {
     return Response.json({ error: 'Bad request' }, { status: 400 })
   }

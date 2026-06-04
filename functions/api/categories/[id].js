@@ -1,10 +1,6 @@
-function isAdmin(request, env) {
-  return request.headers.get('X-Admin-Token') === env.ADMIN_PASSWORD
-}
-
 // PUT /api/categories/:id
-export async function onRequestPut({ env, request, params }) {
-  if (!isAdmin(request, env)) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+export async function onRequestPut({ env, request, params, data }) {
+  if (!data.isAdmin) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const { name, color, is_printable, display_order } = await request.json()
     const fields = []
@@ -23,8 +19,8 @@ export async function onRequestPut({ env, request, params }) {
 }
 
 // DELETE /api/categories/:id
-export async function onRequestDelete({ env, request, params }) {
-  if (!isAdmin(request, env)) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+export async function onRequestDelete({ env, request, params, data }) {
+  if (!data.isAdmin) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     // Null out artwork category_id references before deleting
     await env.DB.prepare('UPDATE artworks SET category_id = NULL WHERE category_id = ?').bind(Number(params.id)).run()

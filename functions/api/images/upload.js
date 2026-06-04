@@ -2,12 +2,8 @@
 // Accepts multipart/form-data with field "image"
 // Stores in R2, returns the key
 
-function isAdmin(request, env) {
-  return request.headers.get('X-Admin-Token') === env.ADMIN_PASSWORD
-}
-
-export async function onRequestPost({ env, request }) {
-  if (!isAdmin(request, env)) {
+export async function onRequestPost({ env, request, data }) {
+  if (!data.isAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

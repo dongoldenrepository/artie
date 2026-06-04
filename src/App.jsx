@@ -5,6 +5,8 @@ import ArtworkDetail from './components/ArtworkDetail'
 import UploadDialog from './components/UploadDialog'
 import CategoryManager from './components/CategoryManager'
 import AdminLogin from './components/AdminLogin'
+import SetPasswordModal from './components/SetPasswordModal'
+import ChangePasswordModal from './components/ChangePasswordModal'
 
 // ─── Toast helper ──────────────────────────────────────────────────────────────
 function useToast() {
@@ -16,13 +18,14 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ onAddArtwork, onAddPhoto, onCategories }) {
+function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword }) {
   return (
     <div className="admin-bar">
       <span className="admin-bar-label">✦ Admin Mode</span>
       <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
       <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
       <button className="btn btn-ghost" onClick={onCategories}>⚙ Catalog Settings</button>
+      <button className="btn btn-ghost" onClick={onChangePassword}>🔑 Change Password</button>
     </div>
   )
 }
@@ -48,7 +51,9 @@ export default function App() {
   const [showLogin, setShowLogin]       = useState(false)
   const [showUpload, setShowUpload]     = useState(false)
   const [uploadType, setUploadType]     = useState('artwork') // 'artwork' | 'photograph'
-  const [showCategories, setShowCategories] = useState(false)
+  const [showCategories, setShowCategories]     = useState(false)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
 
   const { toast, show: showToast } = useToast()
 
@@ -119,11 +124,31 @@ export default function App() {
     }
   }
 
-  function handleLogin(token) {
+  function handleLogin(token, mustChange = false) {
     setAdminToken(token)
-    setIsAdmin(true)
+    sessionStorage.setItem('adminToken', token)
     setShowLogin(false)
-    showToast('Admin mode active')
+    if (mustChange) {
+      setMustChangePassword(true)
+    } else {
+      setIsAdmin(true)
+      showToast('Admin mode active')
+    }
+  }
+
+  function handlePasswordSet(newToken) {
+    setAdminToken(newToken)
+    sessionStorage.setItem('adminToken', newToken)
+    setMustChangePassword(false)
+    setIsAdmin(true)
+    showToast('Password set — admin mode active')
+  }
+
+  function handlePasswordChanged(newToken) {
+    setAdminToken(newToken)
+    sessionStorage.setItem('adminToken', newToken)
+    setShowChangePassword(false)
+    showToast('Password changed')
   }
 
   function handleLogout() {
@@ -200,6 +225,7 @@ export default function App() {
         onAddArtwork={() => { setUploadType('artwork'); setShowUpload(true) }}
         onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
         onCategories={() => setShowCategories(true)}
+        onChangePassword={() => setShowChangePassword(true)}
       />}
 
       {/* ── Filter Bar ── */}
@@ -322,6 +348,18 @@ export default function App() {
 
       {showLogin && (
         <AdminLogin onLogin={handleLogin} onClose={() => setShowLogin(false)} />
+      )}
+
+      {mustChangePassword && (
+        <SetPasswordModal adminToken={adminToken} onDone={handlePasswordSet} />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          adminToken={adminToken}
+          onDone={handlePasswordChanged}
+          onClose={() => setShowChangePassword(false)}
+        />
       )}
 
       {/* ── Toast ── */}
