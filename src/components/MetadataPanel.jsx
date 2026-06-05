@@ -94,8 +94,14 @@ export default function MetadataPanel({
       description: artwork.description || '',
       is_available: artwork.is_available ?? 1,
       genres: artwork.genres?.map(g => g.id) || [],
-      showings: artwork.showings ? JSON.parse(JSON.stringify(artwork.showings)) : [],
-      awards: artwork.awards ? JSON.parse(JSON.stringify(artwork.awards)) : [],
+      history: [
+        ...(artwork.showings || []).map(s =>
+          [s.venue, s.location, s.start_date, s.end_date, s.notes].filter(Boolean).join(' · ')
+        ),
+        ...(artwork.awards || []).map(a =>
+          [a.title, a.organization, a.award_date, a.notes].filter(Boolean).join(' · ')
+        ),
+      ],
       custom_values: cfMap,
     }
     setForm(initial)
@@ -145,6 +151,8 @@ export default function MetadataPanel({
         price: form.price !== '' ? Number(form.price) : null,
         is_available: Number(form.is_available),
         image_key,
+        showings: (form.history || []).filter(Boolean).map(line => ({ venue: line })),
+        awards: [],
       }
       await api.updateArtwork(artwork.id, payload, adminToken)
       setEditing(false)
@@ -318,32 +326,19 @@ function ViewFields({ artwork }) {
         </div>
       )}
 
-      {/* Showings */}
-      {artwork.showings?.length > 0 && (
+      {/* History: showings & awards combined */}
+      {(artwork.showings?.length > 0 || artwork.awards?.length > 0) && (
         <div className="meta-section">
-          <div className="meta-section-title">Showings & Exhibitions</div>
-          {artwork.showings.map((s, i) => (
-            <div key={i} className="showing-item">
-              <strong>{s.venue}</strong>
-              <span>
-                {[s.location, s.start_date && formatDateRange(s.start_date, s.end_date)].filter(Boolean).join(' · ')}
-              </span>
-              {s.notes && <div style={{ marginTop: 2, fontSize: 12, color: '#555' }}>{s.notes}</div>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Awards */}
-      {artwork.awards?.length > 0 && (
-        <div className="meta-section">
-          <div className="meta-section-title">Awards</div>
-          {artwork.awards.map((a, i) => (
-            <div key={i} className="award-item">
-              <strong>{a.title}</strong>
-              <span>{[a.organization, a.award_date].filter(Boolean).join(' · ')}</span>
-              {a.notes && <div style={{ marginTop: 2, fontSize: 12, color: '#555' }}>{a.notes}</div>}
-            </div>
+          <div className="meta-section-title">History</div>
+          {[
+            ...(artwork.showings || []).map(s =>
+              [s.venue, s.location, s.start_date, s.end_date, s.notes].filter(Boolean).join(' · ')
+            ),
+            ...(artwork.awards || []).map(a =>
+              [a.title, a.organization, a.award_date, a.notes].filter(Boolean).join(' · ')
+            ),
+          ].map((line, i) => (
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.6, paddingBottom: 4 }}>{line}</div>
           ))}
         </div>
       )}
@@ -352,25 +347,6 @@ function ViewFields({ artwork }) {
 }
 
 function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImagePick }) {
-  function addShowing() {
-    setField('showings', [...form.showings, { venue: '', location: '', start_date: '', end_date: '', notes: '' }])
-  }
-  function removeShowing(i) {
-    setField('showings', form.showings.filter((_, idx) => idx !== i))
-  }
-  function setShowing(i, k, v) {
-    const arr = [...form.showings]; arr[i] = { ...arr[i], [k]: v }; setField('showings', arr)
-  }
-  function addAward() {
-    setField('awards', [...form.awards, { title: '', organization: '', award_date: '', notes: '' }])
-  }
-  function removeAward(i) {
-    setField('awards', form.awards.filter((_, idx) => idx !== i))
-  }
-  function setAward(i, k, v) {
-    const arr = [...form.awards]; arr[i] = { ...arr[i], [k]: v }; setField('awards', arr)
-  }
-
   const allGenres = artwork._allGenres || []
 
   // Build tag groups for display
@@ -470,40 +446,25 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
         </div>
       )}
 
-      {/* Showings */}
-      <div className="meta-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>Showings</div>
-          <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={addShowing}>+ Add</button>
-        </div>
-        {form.showings.map((s, i) => (
-          <div key={i} className="sub-list-item">
-            <button className="remove-btn" onClick={() => removeShowing(i)}>✕</button>
-            <input placeholder="Venue *" value={s.venue} onChange={e => setShowing(i, 'venue', e.target.value)} style={{ marginBottom: 6 }} />
-            <div className="form-row-2">
-              <input placeholder="Location" value={s.location} onChange={e => setShowing(i, 'location', e.target.value)} />
-              <input type="date" placeholder="Start" value={s.start_date} onChange={e => setShowing(i, 'start_date', e.target.value)} />
-            </div>
-            <input placeholder="Notes" value={s.notes} onChange={e => setShowing(i, 'notes', e.target.value)} style={{ marginTop: 6 }} />
-          </div>
-        ))}
-      </div>
-
-      {/* Awards */}
+      {/* History: showings & awards combined */}
       <div className="meta-section" style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>Awards</div>
-          <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={addAward}>+ Add</button>
+          <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>History</div>
+          <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}
+            onClick={() => setField('history', [...(form.history || []), ''])}>+ Add</button>
         </div>
-        {form.awards.map((a, i) => (
-          <div key={i} className="sub-list-item">
-            <button className="remove-btn" onClick={() => removeAward(i)}>✕</button>
-            <input placeholder="Award title *" value={a.title} onChange={e => setAward(i, 'title', e.target.value)} style={{ marginBottom: 6 }} />
-            <div className="form-row-2">
-              <input placeholder="Organization" value={a.organization} onChange={e => setAward(i, 'organization', e.target.value)} />
-              <input type="date" value={a.award_date} onChange={e => setAward(i, 'award_date', e.target.value)} />
-            </div>
-            <input placeholder="Notes" value={a.notes} onChange={e => setAward(i, 'notes', e.target.value)} style={{ marginTop: 6 }} />
+        {(form.history || []).map((line, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center' }}>
+            <input
+              value={line}
+              onChange={e => {
+                const next = [...form.history]; next[i] = e.target.value; setField('history', next)
+              }}
+              placeholder="Gallery · Location · Date · Award · Notes"
+              style={{ flex: 1 }}
+            />
+            <button className="remove-btn" style={{ flexShrink: 0 }}
+              onClick={() => setField('history', form.history.filter((_, idx) => idx !== i))}>✕</button>
           </div>
         ))}
       </div>
@@ -520,11 +481,6 @@ function MetaItem({ label, value }) {
   )
 }
 
-function formatDateRange(start, end) {
-  if (!start) return ''
-  if (!end || start === end) return start
-  return `${start} – ${end}`
-}
 
 function PrintForm({ print, setPrint, onSave, onCancel, saveLabel = 'Add Print' }) {
   return (
