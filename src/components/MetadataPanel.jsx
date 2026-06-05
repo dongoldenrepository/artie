@@ -448,11 +448,19 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
 
       {/* History: showings & awards combined */}
       <div className="meta-section" style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>History</div>
           <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}
-            onClick={() => setField('history', [...(form.history || []), ''])}>+ Add</button>
+            onClick={() => setField('history', [...(form.history || []), ''])}>+ Add Entry</button>
         </div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>
+          Each line: Gallery / Location · Date · Award · Notes
+        </div>
+        {(form.history || []).length === 0 && (
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            No history yet — click + Add Entry above.
+          </div>
+        )}
         {(form.history || []).map((line, i) => (
           <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center' }}>
             <input
@@ -460,7 +468,7 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
               onChange={e => {
                 const next = [...form.history]; next[i] = e.target.value; setField('history', next)
               }}
-              placeholder="Gallery · Location · Date · Award · Notes"
+              placeholder="e.g. Gold Gallery · Santa Fe · Oct 2023 · Best in Show"
               style={{ flex: 1 }}
             />
             <button className="remove-btn" style={{ flexShrink: 0 }}
