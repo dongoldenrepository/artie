@@ -21,10 +21,8 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete }) {
 
   const metaParts = [artwork.medium, !isPrintable && artwork.size].filter(Boolean)
 
-  const printLabel = isPrintable
-    ? (artwork.print_count > 0
-        ? `${artwork.prints_available} of ${artwork.print_count} prints available`
-        : 'No prints yet')
+  const printLabel = isPrintable && artwork.print_count > 0
+    ? `${artwork.prints_available} of ${artwork.print_count} prints available`
     : null
 
   // Show genre tags (style tags) in the card badges
