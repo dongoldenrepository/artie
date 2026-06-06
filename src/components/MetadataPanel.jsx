@@ -12,6 +12,8 @@ export default function MetadataPanel({
   artwork, isAdmin, adminToken, isOpen,
   editing = false, onEditingChange,
   onToggle, onClose, onSaved,
+  onDirtyChange,
+  saveRequested = 0,
   extraImages: extraImagesProp = [], onExtraImagesChange
 }) {
   function setEditing(val) { onEditingChange?.(val) }
@@ -108,7 +110,14 @@ export default function MetadataPanel({
     setOriginalForm(initial)
     setIsDirty(false)
     setError(null)
-  }, [artwork?.id])
+  }, [artwork?.id]) // eslint-disable-line
+
+  // Report dirty state to parent
+  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty]) // eslint-disable-line
+
+  // Save when parent requests it (e.g. from unsaved-changes dialog)
+  useEffect(() => { if (saveRequested > 0) handleSave() }, [saveRequested]) // eslint-disable-line
+
 
   function handleImagePick(e) {
     const file = e.target.files[0]

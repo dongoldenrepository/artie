@@ -110,6 +110,14 @@ export default function App() {
     } catch {}
   }
 
+  // Reload grid only (used after save-and-close so overlay doesn't reopen)
+  async function reloadGrid() {
+    try {
+      await loadAll()
+      showToast('Saved!')
+    } catch {}
+  }
+
   async function openArtwork(artwork) {
     try {
       const full = await api.getArtwork(artwork.id)
@@ -304,6 +312,7 @@ export default function App() {
           adminToken={adminToken}
           onClose={() => setSelectedArtwork(null)}
           onSaved={reloadSelected}
+          onSavedAndClose={reloadGrid}
           onNavigate={openArtwork}
           onDelete={handleDeleteArtwork}
         />

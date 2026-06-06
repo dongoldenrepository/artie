@@ -492,6 +492,31 @@ label { font-size: 13px; font-weight: 500; color: var(--text-muted); display: bl
 .showing-item strong, .award-item strong { display: block; font-weight: 600; }
 .showing-item span, .award-item span { color: var(--text-muted); font-size: 12px; }
 
+/* ---------- DIRTY-CLOSE DIALOG ---------- */
+.dirty-dialog-overlay {
+  position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+}
+.dirty-dialog {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  max-width: 400px; width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+.dirty-dialog h3 {
+  font-size: 16px; font-weight: 600;
+  color: var(--text); margin-bottom: 8px;
+}
+.dirty-dialog p {
+  font-size: 13px; color: var(--text-muted); margin-bottom: 24px;
+}
+.dirty-dialog-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
 /* ---------- MODALS ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 300;

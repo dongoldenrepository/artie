@@ -1,15 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { imgSrc, api } from '../utils/api'
 import MetadataPanel from './MetadataPanel'
 
 export default function ArtworkDetail({
   artwork, allArtworks, isAdmin, adminToken,
-  onClose, onSaved, onNavigate, onDelete
+  onClose, onSaved, onSavedAndClose, onNavigate, onDelete
 }) {
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing]     = useState(false)
   const [activeIdx, setActiveIdx] = useState(0)
   const [extraImages, setExtraImages] = useState([])
+  const [panelDirty, setPanelDirty]     = useState(false)
+  const [showDirtyDialog, setShowDirtyDialog] = useState(false)
+  const [saveRequested, setSaveRequested]     = useState(0)
+  const pendingCloseRef = useRef(false)
 
   // Fetch extra images directly from API whenever artwork changes
   useEffect(() => {
@@ -32,11 +36,11 @@ export default function ArtworkDetail({
     const tag = e.target.tagName.toLowerCase()
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return
 
-    if (e.key === 'Escape') { onClose(); return }
+    if (e.key === 'Escape') { handleClose(); return }
     if (e.key === 'ArrowRight') navigate('next')
     if (e.key === 'ArrowLeft')  navigate('prev')
     if (e.key === 'i') setPanelOpen(o => !o)
-  }, [artwork, allArtworks]) // eslint-disable-line
+  }, [artwork, allArtworks, editing, panelDirty]) // eslint-disable-line
 
   useEffect(() => {
     document.addEventListener('keydown', handleKey)
@@ -56,6 +60,34 @@ export default function ArtworkDetail({
     onNavigate(next)
   }
 
+  // Guard close against unsaved edits
+  function handleClose() {
+    if (editing && panelDirty) { setShowDirtyDialog(true); return }
+    onClose()
+  }
+
+  function handleSaveAndClose() {
+    setShowDirtyDialog(false)
+    pendingCloseRef.current = true
+    setSaveRequested(n => n + 1)
+  }
+
+  function handleDiscardAndClose() {
+    setShowDirtyDialog(false)
+    onClose()
+  }
+
+  // Called by MetadataPanel after a successful save
+  function handlePanelSaved() {
+    if (pendingCloseRef.current) {
+      pendingCloseRef.current = false
+      onSavedAndClose?.()   // reloads grid without reopening overlay
+      onClose()
+    } else {
+      onSaved()
+    }
+  }
+
   if (!artwork) return null
   const activeSrc = allImages[activeIdx] ? imgSrc(allImages[activeIdx].key) : null
 
@@ -63,10 +95,10 @@ export default function ArtworkDetail({
   const enriched = { ...artwork, _allGenres: artwork._allGenres }
 
   return (
-    <div className="detail-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="detail-overlay" onClick={e => { if (e.target === e.currentTarget) handleClose() }}>
 
       {/* Close button */}
-      <button className="detail-close" onClick={onClose} title="Close (Esc)">✕</button>
+      <button className="detail-close" onClick={handleClose} title="Close (Esc)">✕</button>
 
       {/* Admin delete button */}
       {isAdmin && (
@@ -152,9 +184,26 @@ export default function ArtworkDetail({
         onToggle={() => setPanelOpen(o => !o)}
         extraImages={extraImages}
         onExtraImagesChange={setExtraImages}
-        onClose={onClose}
-        onSaved={onSaved}
+        onClose={handleClose}
+        onSaved={handlePanelSaved}
+        onDirtyChange={setPanelDirty}
+        saveRequested={saveRequested}
       />
+
+      {/* Unsaved changes dialog */}
+      {showDirtyDialog && (
+        <div className="dirty-dialog-overlay" onClick={() => setShowDirtyDialog(false)}>
+          <div className="dirty-dialog" onClick={e => e.stopPropagation()}>
+            <h3>Unsaved Changes</h3>
+            <p>You have unsaved edits. Save them before closing, or discard?</p>
+            <div className="dirty-dialog-actions">
+              <button className="btn btn-ghost" onClick={() => setShowDirtyDialog(false)}>Keep Editing</button>
+              <button className="btn btn-ghost" style={{ color: '#e07070' }} onClick={handleDiscardAndClose}>Discard</button>
+              <button className="btn btn-primary" onClick={handleSaveAndClose}>Save & Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
