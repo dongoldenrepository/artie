@@ -131,6 +131,42 @@ label { font-size: 13px; font-weight: 500; color: var(--text-muted); display: bl
   font-size: 13px;
 }
 
+/* ---------- SEARCH SCOPE TOGGLE ---------- */
+.search-scope-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scope-btn {
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.scope-btn + .scope-btn {
+  border-left: 1px solid var(--border);
+}
+
+.scope-btn:hover:not(.active) {
+  background: var(--border);
+  color: var(--text);
+}
+
+.scope-btn.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
 /* ---------- ADMIN BAR ---------- */
 .admin-bar {
   height: var(--adminbar-h);
