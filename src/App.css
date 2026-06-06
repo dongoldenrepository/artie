@@ -221,12 +221,13 @@ label { font-size: 13px; font-weight: 500; color: var(--text-muted); display: bl
   appearance: none;
 }
 .artwork-count {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 5px 16px;
   white-space: nowrap;
 }
 
