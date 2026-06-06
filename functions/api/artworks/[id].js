@@ -1,4 +1,4 @@
-// GET /api/artworks/:id  — full detail with showings, awards, custom fields
+// GET /api/artworks/:id  — full detail with showings, custom fields
 export async function onRequestGet({ env, params, data }) {
   try {
     const id = Number(params.id)
@@ -27,11 +27,6 @@ export async function onRequestGet({ env, params, data }) {
       'SELECT * FROM showings WHERE artwork_id = ? ORDER BY start_date DESC'
     ).bind(id).all()
 
-    // Awards
-    const awards = await env.DB.prepare(
-      'SELECT * FROM awards WHERE artwork_id = ? ORDER BY award_date DESC'
-    ).bind(id).all()
-
     // Custom field values
     const customVals = await env.DB.prepare(`
       SELECT cfd.id AS field_id, cfd.name AS field_name, cfd.field_type, acv.value
@@ -55,7 +50,6 @@ export async function onRequestGet({ env, params, data }) {
       ...artwork,
       genres: genresRes.results,
       showings: showings.results,
-      awards: awards.results,
       custom_fields: customVals.results,
       prints: prints.results,
       extra_images: extraImages.results,
@@ -77,7 +71,7 @@ export async function onRequestPut({ env, request, params, data }) {
       current_location, description, image_key, is_available,
       category_id,
       genres, custom_values,
-      showings, awards
+      showings
     } = await request.json()
 
     // Build dynamic UPDATE
@@ -128,16 +122,6 @@ export async function onRequestPut({ env, request, params, data }) {
       }
     }
 
-    // Replace awards
-    if (awards !== undefined) {
-      await env.DB.prepare('DELETE FROM awards WHERE artwork_id = ?').bind(id).run()
-      for (const a of awards) {
-        await env.DB.prepare(
-          'INSERT INTO awards (artwork_id, title, organization, award_date, notes) VALUES (?,?,?,?,?)'
-        ).bind(id, a.title, a.organization || null, a.award_date || null, a.notes || null).run()
-      }
-    }
-
     return Response.json({ success: true })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
@@ -155,7 +139,7 @@ export async function onRequestDelete({ env, request, params, data }) {
     // Get image key to delete from R2
     const row = await env.DB.prepare('SELECT image_key FROM artworks WHERE id = ?').bind(id).first()
 
-    // Delete from DB (cascades to genres, showings, awards, custom values)
+    // Delete from DB (cascades to genres, showings, custom values)
     await env.DB.prepare('DELETE FROM artworks WHERE id = ?').bind(id).run()
 
     // Delete image from R2

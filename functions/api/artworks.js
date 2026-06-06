@@ -30,12 +30,17 @@ export async function onRequestGet({ env, request, data }) {
 
     if (categoryId) { query += ' AND a.category_id = ?'; params.push(Number(categoryId)) }
     for (const term of terms) {
+      const p = `%${term}%`
       if (searchScope === 'all') {
-        query += ' AND (a.title LIKE ? OR a.medium LIKE ? OR a.description LIKE ?)'
-        params.push(`%${term}%`, `%${term}%`, `%${term}%`)
+        query += ` AND (
+          a.title LIKE ? OR a.medium LIKE ? OR a.description LIKE ?
+          OR EXISTS (SELECT 1 FROM showings sh WHERE sh.artwork_id = a.id
+                     AND (sh.venue LIKE ? OR sh.location LIKE ? OR sh.notes LIKE ?))
+        )`
+        params.push(p, p, p, p, p, p)
       } else {
         query += ' AND a.title LIKE ?'
-        params.push(`%${term}%`)
+        params.push(p)
       }
     }
 

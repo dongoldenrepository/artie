@@ -100,9 +100,6 @@ export default function MetadataPanel({
         ...(artwork.showings || []).map(s =>
           [s.venue, s.location, s.start_date, s.end_date, s.notes].filter(Boolean).join(' · ')
         ),
-        ...(artwork.awards || []).map(a =>
-          [a.title, a.organization, a.award_date, a.notes].filter(Boolean).join(' · ')
-        ),
       ],
       custom_values: cfMap,
     }
@@ -161,7 +158,6 @@ export default function MetadataPanel({
         is_available: Number(form.is_available),
         image_key,
         showings: (form.history || []).filter(Boolean).map(line => ({ venue: line })),
-        awards: [],
       }
       await api.updateArtwork(artwork.id, payload, adminToken)
       setEditing(false)
@@ -335,16 +331,13 @@ function ViewFields({ artwork }) {
         </div>
       )}
 
-      {/* History: showings & awards combined */}
-      {(artwork.showings?.length > 0 || artwork.awards?.length > 0) && (
+      {/* History: showings */}
+      {artwork.showings?.length > 0 && (
         <div className="meta-section">
           <div className="meta-section-title">History</div>
           {[
             ...(artwork.showings || []).map(s =>
               [s.venue, s.location, s.start_date, s.end_date, s.notes].filter(Boolean).join(' · ')
-            ),
-            ...(artwork.awards || []).map(a =>
-              [a.title, a.organization, a.award_date, a.notes].filter(Boolean).join(' · ')
             ),
           ].map((line, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.6, paddingBottom: 4 }}>{line}</div>
@@ -455,7 +448,7 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
         </div>
       )}
 
-      {/* History: showings & awards combined */}
+      {/* History */}
       <div className="meta-section" style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>History</div>
