@@ -5,7 +5,9 @@ export async function onRequestGet({ env, request, data }) {
     const artistId  = data.artistId
     const genreId   = url.searchParams.get('genre_id')
     const categoryId = url.searchParams.get('category_id')
-    const search    = url.searchParams.get('search')
+    const search      = url.searchParams.get('search')
+    const searchScope = url.searchParams.get('search_scope') || 'title'
+    const terms       = search ? search.trim().split(/\s+/).filter(Boolean) : []
 
     let query = `
       SELECT
@@ -27,7 +29,15 @@ export async function onRequestGet({ env, request, data }) {
     const params = [artistId]
 
     if (categoryId) { query += ' AND a.category_id = ?'; params.push(Number(categoryId)) }
-    if (search)     { query += ' AND (a.title LIKE ? OR a.medium LIKE ? OR a.description LIKE ?)'; params.push(`%${search}%`, `%${search}%`, `%${search}%`) }
+    for (const term of terms) {
+      if (searchScope === 'all') {
+        query += ' AND (a.title LIKE ? OR a.medium LIKE ? OR a.description LIKE ?)'
+        params.push(`%${term}%`, `%${term}%`, `%${term}%`)
+      } else {
+        query += ' AND a.title LIKE ?'
+        params.push(`%${term}%`)
+      }
+    }
 
     query += ' GROUP BY a.id ORDER BY a.sort_order DESC, a.created_at DESC'
 
