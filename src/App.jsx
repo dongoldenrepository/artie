@@ -42,7 +42,7 @@ export default function App() {
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [filterGenre, setFilterGenre]         = useState(null)
   const [search, setSearch]                   = useState('')
-  const [searchScope, setSearchScope]         = useState('title') // 'title' | 'all'
+  const [searchScope, setSearchScope]         = useState('all') // 'title' | 'all'
 
   // Admin
   const [adminToken, setAdminToken]     = useState(() => sessionStorage.getItem('adminToken'))
