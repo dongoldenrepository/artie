@@ -280,9 +280,9 @@ export default function App() {
           <div className="artwork-grid">
             {displayed.length === 0 ? (
               <div className="empty-state">
-                <h3>No artworks yet</h3>
-                <p>{isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
-                {isAdmin && (
+                <h3>{search || filterGenre ? 'No artworks found' : 'No artworks yet'}</h3>
+                <p>{search || filterGenre ? 'Try a different search or filter.' : isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
+                {!search && !filterGenre && isAdmin && (
                   <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
                     + Add Artwork
                   </button>
