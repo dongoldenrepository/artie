@@ -448,7 +448,7 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
 
       {/* History: showings & awards combined */}
       <div className="meta-section" style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>History</div>
           <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}
             onClick={() => setField('history', [...(form.history || []), ''])}>+ Add Entry</button>
@@ -546,7 +546,7 @@ function PrintsSection({
   const available = prints.filter(p => p.is_available).length
   return (
     <div className="meta-section">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>
           Prints
           {prints.length > 0 && (
