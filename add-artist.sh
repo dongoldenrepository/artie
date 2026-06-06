@@ -31,14 +31,17 @@ if [[ -z "$FULL_NAME" ]]; then
 fi
 
 # ── Derive slugs from name ────────────────────────────────────
-FIRST=$(echo "$FULL_NAME" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
-LAST=$(echo "$FULL_NAME"  | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')
+# Slug uses first word + last word only, lowercased, hyphens stripped
+# "Eugenia Algaze Garcia" → artie-eugenia-garcia
+# "Mary-Jane Doe"         → artie-maryjane-doe
+FIRST=$(echo "$FULL_NAME" | awk '{print $1}' | tr '[:upper:]' '[:lower:]' | tr -d '-')
+LAST=$(echo "$FULL_NAME"  | awk '{print $NF}' | tr '[:upper:]' '[:lower:]' | tr -d '-')
 
-SLUG="artie-${FIRST}-${LAST}"          # e.g. artie-jane-doe
-DB_NAME="${SLUG}-db"                   # e.g. artie-jane-doe-db
-BUCKET_NAME="${SLUG}-images"           # e.g. artie-jane-doe-images
-SUBDOMAIN="${SLUG}"                    # e.g. artie-jane-doe
-TOML_FILE="wrangler-${FIRST}.toml"    # e.g. wrangler-jane.toml
+SLUG="artie-${FIRST}-${LAST}"          # e.g. artie-eugenia-garcia
+DB_NAME="${SLUG}-db"                   # e.g. artie-eugenia-garcia-db
+BUCKET_NAME="${SLUG}-images"           # e.g. artie-eugenia-garcia-images
+SUBDOMAIN="${SLUG}"                    # e.g. artie-eugenia-garcia
+TOML_FILE="wrangler-${FIRST}.toml"    # e.g. wrangler-eugenia.toml
 
 echo ""
 echo "┌─────────────────────────────────────────────┐"
