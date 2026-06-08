@@ -21,7 +21,6 @@ function useToast() {
 function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword }) {
   return (
     <div className="admin-bar">
-      <span className="admin-bar-label">✦ Admin Mode</span>
       <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
       <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
       <button className="btn btn-ghost" onClick={onCategories}>⚙ Catalog Settings</button>
@@ -218,9 +217,10 @@ export default function App() {
           ? <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => setShowLogin(true)}>
               Admin
             </button>
-          : <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={handleLogout}>
-              Log out
-            </button>
+          : <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.05em', opacity: 0.85 }}>✦ ADMIN</span>
+              <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={handleLogout}>Log out</button>
+            </div>
         }
       </header>
 
