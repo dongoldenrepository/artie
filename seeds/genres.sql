@@ -22,6 +22,9 @@ INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES 
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Collage',      '#a78bfa', 'medium', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Sculpture',    '#94a3b8', 'medium', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Fiber',        '#f472b6', 'medium', 1);
+INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Ceramics',     '#c2410c', 'medium', 1);
+INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Glass',        '#0891b2', 'medium', 1);
+INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Jewelry',      '#fbbf24', 'medium', 1);
 
 -- ── Subject ───────────────────────────────────────────────────
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Portrait',     '#ef4444', 'subject', 1);
@@ -46,9 +49,6 @@ INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES 
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Insects',      '#65a30d', 'subject', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Technical',    '#cbd5e1', 'subject', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Vehicles',     '#dc2626', 'subject', 1);
-INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Ceramics',     '#c2410c', 'subject', 1);
-INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Glass',        '#0891b2', 'subject', 1);
-INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Jewelry',      '#fbbf24', 'subject', 1);
 
 -- ── Style ─────────────────────────────────────────────────────
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Impressionism',  '#3b82f6', 'style', 1);
