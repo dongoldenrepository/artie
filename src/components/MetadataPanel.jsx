@@ -331,10 +331,10 @@ function ViewFields({ artwork }) {
         </div>
       )}
 
-      {/* History: showings */}
+      {/* Display History */}
       {artwork.showings?.length > 0 && (
         <div className="meta-section">
-          <div className="meta-section-title">History</div>
+          <div className="meta-section-title">Display History</div>
           {[
             ...(artwork.showings || []).map(s =>
               [s.venue, s.location, s.start_date, s.end_date, s.notes].filter(Boolean).join(' · ')
@@ -375,7 +375,16 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
       <div className="form-row-2" style={{ marginBottom: 12 }}>
         <div className="form-row">
           <label>Medium</label>
-          <input value={form.medium} onChange={e => setField('medium', e.target.value)} placeholder="Oil on canvas" />
+          <select value={form.medium} onChange={e => setField('medium', e.target.value)}>
+            <option value="">— select —</option>
+            {/* Current value not in genre list (legacy free text) */}
+            {form.medium && !allGenres.some(g => g.tag_type === 'medium' && g.name === form.medium) && (
+              <option value={form.medium}>{form.medium}</option>
+            )}
+            {allGenres.filter(g => g.tag_type === 'medium').map(g => (
+              <option key={g.id} value={g.name}>{g.name}</option>
+            ))}
+          </select>
         </div>
         <div className="form-row">
           <label>Size</label>
@@ -448,10 +457,10 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
         </div>
       )}
 
-      {/* History */}
+      {/* Display History */}
       <div className="meta-section" style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>History</div>
+          <div className="meta-section-title" style={{ border: 'none', padding: 0, margin: 0 }}>Display History</div>
           <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}
             onClick={() => setField('history', [...(form.history || []), ''])}>+ Add Entry</button>
         </div>
@@ -460,7 +469,7 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
         </div>
         {(form.history || []).length === 0 && (
           <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-            No history yet — click + Add Entry above.
+            No display history yet — click + Add Entry above.
           </div>
         )}
         {(form.history || []).map((line, i) => (
