@@ -47,6 +47,8 @@ export default function App() {
   const [adminToken, setAdminToken]     = useState(() => sessionStorage.getItem('adminToken'))
   const [isAdmin, setIsAdmin]           = useState(false)
   const [showLogin, setShowLogin]       = useState(false)
+  const [sortMode, setSortMode]         = useState(() => localStorage.getItem('artie-sort') || 'manual')
+  const [draggedId, setDraggedId]       = useState(null)
   const [showUpload, setShowUpload]     = useState(false)
   const [uploadType, setUploadType]     = useState('artwork') // 'artwork' | 'photograph'
   const [showCategories, setShowCategories]     = useState(false)
@@ -172,7 +174,40 @@ export default function App() {
     }
   }
 
-  const displayed = artworks
+  function toggleSortMode(mode) {
+    setSortMode(mode)
+    localStorage.setItem('artie-sort', mode)
+  }
+
+  function handleDragStart(e, id) {
+    setDraggedId(id)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  async function handleDrop(e, targetId) {
+    e.preventDefault()
+    if (!draggedId || draggedId === targetId) { setDraggedId(null); return }
+    const arr = [...artworks]
+    const fromIdx = arr.findIndex(a => a.id === draggedId)
+    const toIdx   = arr.findIndex(a => a.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDraggedId(null); return }
+    const [moved] = arr.splice(fromIdx, 1)
+    arr.splice(toIdx, 0, moved)
+    const n = arr.length
+    const order = arr.map((a, i) => ({ id: a.id, sort_order: n - i }))
+    setArtworks(arr)
+    setDraggedId(null)
+    try {
+      await api.reorderArtworks(order, adminToken)
+    } catch {
+      showToast('Failed to save order', 'error')
+      loadAll()
+    }
+  }
+
+  const displayed = sortMode === 'title'
+    ? [...artworks].sort((a, b) => a.title.localeCompare(b.title))
+    : artworks
 
   // Only show filter buttons for genres actually used by current artworks
   const usedGenreIds = new Set(artworks.flatMap(aw => (aw.genres || []).map(g => g.id)))
@@ -261,6 +296,10 @@ export default function App() {
         })}
 
         <div className="filter-bar-right">
+          <div className="search-scope-toggle">
+            <button className={`scope-btn ${sortMode === 'title' ? 'active' : ''}`} onClick={() => toggleSortMode('title')} title="Sort alphabetically by title">Title</button>
+            <button className={`scope-btn ${sortMode === 'manual' ? 'active' : ''}`} onClick={() => toggleSortMode('manual')} title={isAdmin ? 'Manual order — drag to rearrange' : 'Manual order'}>Manual</button>
+          </div>
           {!loading && (
             <span className="artwork-count">
               {displayed.length} {displayed.length === 1 ? 'piece' : 'pieces'}
@@ -296,6 +335,11 @@ export default function App() {
                   isAdmin={isAdmin}
                   onClick={openArtwork}
                   onDelete={handleDeleteArtwork}
+                  draggable={isAdmin && sortMode === 'manual'}
+                  onDragStart={e => handleDragStart(e, aw.id)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => handleDrop(e, aw.id)}
+                  isDragging={draggedId === aw.id}
                 />
               ))
             )}

@@ -139,6 +139,13 @@ export const api = {
     body: JSON.stringify({ currentPassword, newPassword }),
   }),
 
+  // Reorder artworks (manual sort)
+  reorderArtworks: (order, token) => req('/artworks/reorder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    body: JSON.stringify({ order }),
+  }),
+
   // Image upload — resizes to 2000px long side if needed before uploading
   uploadImage: async (file, token) => {
     const MAX_LONG_SIDE = 2000

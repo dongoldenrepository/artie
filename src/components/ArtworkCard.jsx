@@ -1,6 +1,6 @@
 import { imgSrc } from '../utils/api'
 
-export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete }) {
+export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, isDragging }) {
   function handleDelete(e) {
     e.stopPropagation()
     if (window.confirm(`Delete "${artwork.title}"? This cannot be undone.`)) {
@@ -29,7 +29,14 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete }) {
   const badgeItems = artwork.genres || []
 
   return (
-    <div className="artwork-card" onClick={() => onClick(artwork)}>
+    <div
+      className={`artwork-card${isDragging ? ' drag-source' : ''}`}
+      onClick={() => onClick(artwork)}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <div className="card-image-wrap">
         {src
           ? <img src={src} alt={artwork.title} loading="lazy" />
