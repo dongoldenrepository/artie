@@ -139,10 +139,38 @@ export const api = {
     body: JSON.stringify({ currentPassword, newPassword }),
   }),
 
-  // Image upload
+  // Image upload — resizes to 2000px long side if needed before uploading
   uploadImage: async (file, token) => {
+    const MAX_LONG_SIDE = 2000
+    const JPEG_QUALITY = 0.90
+
+    const resizedFile = await new Promise((resolve) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const { naturalWidth: w, naturalHeight: h } = img
+        const longSide = Math.max(w, h)
+        if (longSide <= MAX_LONG_SIDE) {
+          resolve(file)
+          return
+        }
+        const scale = MAX_LONG_SIDE / longSide
+        const canvas = document.createElement('canvas')
+        canvas.width  = Math.round(w * scale)
+        canvas.height = Math.round(h * scale)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(
+          (blob) => resolve(new File([blob], file.name, { type: 'image/jpeg' })),
+          'image/jpeg',
+          JPEG_QUALITY
+        )
+      }
+      img.src = url
+    })
+
     const fd = new FormData()
-    fd.append('image', file)
+    fd.append('image', resizedFile)
     const res = await fetch(`${BASE}/images/upload`, {
       method: 'POST',
       headers: { 'X-Admin-Token': token },
