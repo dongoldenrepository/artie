@@ -17,6 +17,7 @@
 import { execSync } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { findBySlug, markDecommissioned } from './registry.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT      = path.resolve(__dirname, '..')
@@ -25,15 +26,28 @@ const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID
 const CF_API_TOKEN  = process.env.CF_API_TOKEN
 const R2_BUCKET     = 'artie-site-images'
 
-const [slug, dbId] = process.argv.slice(2)
+// ── Args: slug only (DB ID read from registry) ────────────────────────────────
+function die(msg)  { console.error('\n❌  ' + msg + '\n'); process.exit(1) }
 
-// ── Validate ──────────────────────────────────────────────────────────────────
-if (!slug || !dbId) die(
-  'Usage: node scripts/decommission.mjs <slug> <db-id>\n' +
-  'Example: node scripts/decommission.mjs jane-smith 29a538c3-feff-4b09-9ed2-00d59495ff68'
+const [slugArg, dbIdArg] = process.argv.slice(2)
+const slug = slugArg
+
+if (!slug) die(
+  'Usage: node scripts/decommission.mjs <slug>\n' +
+  'Example: node scripts/decommission.mjs jane-smith\n\n' +
+  '  (slug and DB ID are read from scripts/artists.json)\n' +
+  '  If not in registry, pass DB ID as second arg: node scripts/decommission.mjs jane-smith <db-id>'
 )
 if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die(
   'Missing env vars — run: export CF_ACCOUNT_ID=xxx CF_API_TOKEN=xxx'
+)
+
+// Look up DB ID from registry (fallback to second arg)
+const registryEntry = findBySlug(slug)
+const dbId = registryEntry?.db_id ?? dbIdArg
+if (!dbId) die(
+  `"${slug}" not found in registry and no DB ID provided.\n` +
+  'Pass the DB ID as a second argument: node scripts/decommission.mjs jane-smith <db-id>'
 )
 
 const projectName = `artie-${slug}`
@@ -143,8 +157,13 @@ try {
   log(`   Manually delete "${dbName}" in Cloudflare dashboard → Storage & Databases → D1`)
 }
 
-// ── Step 5: Clean up local wrangler config ────────────────────────────────────
-step(5, 'Cleaning up local config...')
+// ── Step 5: Update registry ───────────────────────────────────────────────────
+step(5, 'Updating registry...')
+markDecommissioned(slug)
+log(`✓ Marked as decommissioned in scripts/artists.json`)
+
+// ── Step 6: Clean up local wrangler config ────────────────────────────────────
+step(6, 'Cleaning up local config...')
 const configPath = path.join(ROOT, `wrangler-${slug}.toml`)
 try {
   if (require('fs').existsSync(configPath)) {

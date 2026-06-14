@@ -3,6 +3,7 @@ dist/
 .wrangler/
 .env
 scripts/.env
+scripts/artists.json
 *.local
 
 # Per-artist config — never commit these

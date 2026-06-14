@@ -7,6 +7,8 @@
  *   node scripts/provision.mjs "Jane Smith" --trial
  *   node scripts/provision.mjs "Jane Smith" --trial --days=14
  *   node scripts/provision.mjs "Jane Smith" --trial --password=Welcome123
+ *   node scripts/provision.mjs "Jane Smith" --slug=jane-smith-denver   (collision override)
+ *   node scripts/provision.mjs "Jane Smith" --email=jane@example.com
  *
  * Requires env vars: CF_ACCOUNT_ID, CF_API_TOKEN
  * (Copy scripts/.env.example → scripts/.env and source it, or set them in your shell)
@@ -16,6 +18,7 @@ import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { resolveSlug, upsert } from './registry.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -37,18 +40,28 @@ const daysArg    = args.find(a => a.startsWith('--days='))
 const trialDays  = daysArg ? parseInt(daysArg.split('=')[1]) : 14
 const pwArg      = args.find(a => a.startsWith('--password='))
 const password   = pwArg ? pwArg.split('=')[1] : randomPassword()
+const slugArg    = args.find(a => a.startsWith('--slug='))
+const emailArg   = args.find(a => a.startsWith('--email='))
+const email      = emailArg ? emailArg.split('=')[1] : null
 
 // ── Validate ─────────────────────────────────────────────────────────────────
 if (!artistName) die(
-  'Usage: node scripts/provision.mjs "Jane Smith" [--trial] [--days=14] [--password=xxx]'
+  'Usage: node scripts/provision.mjs "Jane Smith" [--trial] [--days=14] [--password=xxx] [--slug=jane-smith-denver] [--email=jane@example.com]'
 )
 if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die(
   'Missing env vars — run: export CF_ACCOUNT_ID=xxx CF_API_TOKEN=xxx\n' +
   '(See scripts/.env.example)'
 )
 
-// ── Derived names ─────────────────────────────────────────────────────────────
-const slug        = toSlug(artistName)
+// ── Derived names (with collision detection) ───────────────────────────────────
+const baseSlug    = slugArg ? slugArg.split('=')[1] : toSlug(artistName)
+const slug        = resolveSlug(baseSlug)
+
+if (slug !== baseSlug) {
+  console.log(`\n  ⚠  Slug "${baseSlug}" already in use — using "${slug}" instead.`)
+  console.log(`     (Override with --slug=your-choice if you prefer a different suffix)\n`)
+}
+
 const projectName = `artie-${slug}`
 const dbName      = `artie-${slug}-db`
 const configFile  = path.join(ROOT, `wrangler-${slug}.toml`)
@@ -223,6 +236,20 @@ try {
   log(`     Build: npm run build  |  Output: dist`)
   log(`     Add env vars and D1/R2 bindings from wrangler-${slug}.toml`)
 }
+
+// ── Write to registry ─────────────────────────────────────────────────────────
+upsert({
+  name:          artistName,
+  slug,
+  email:         email ?? null,
+  db_id:         dbId,
+  project_name:  projectName,
+  status:        isTrial ? 'trial' : 'paid',
+  trial_expires: trialExpires ?? null,
+  trial_limit:   isTrial ? TRIAL_LIMIT : null,
+  password_hint: password.slice(0, 3) + '…', // don't store full password
+  site_url:      `https://${projectName}.pages.dev`,
+})
 
 // ── Done ──────────────────────────────────────────────────────────────────────
 console.log(`
