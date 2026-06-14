@@ -1,6 +1,34 @@
 import { useState } from 'react'
 import { api } from '../utils/api'
 
+function PasswordInput({ value, onChange, placeholder, autoFocus }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        style={{ paddingRight: 36, width: '100%', boxSizing: 'border-box' }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(s => !s)}
+        style={{
+          position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+          background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 14, padding: 0
+        }}
+        tabIndex={-1}
+        title={show ? 'Hide password' : 'Show password'}
+      >
+        {show ? '🙈' : '👁'}
+      </button>
+    </div>
+  )
+}
+
 export default function ChangePasswordModal({ adminToken, onDone, onClose }) {
   const [current, setCurrent]         = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -35,8 +63,7 @@ export default function ChangePasswordModal({ adminToken, onDone, onClose }) {
           <div className="modal-body">
             <div className="form-row">
               <label>Current Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={current}
                 onChange={e => setCurrent(e.target.value)}
                 placeholder="Your current password"
@@ -45,8 +72,7 @@ export default function ChangePasswordModal({ adminToken, onDone, onClose }) {
             </div>
             <div className="form-row">
               <label>New Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters"
@@ -54,8 +80,7 @@ export default function ChangePasswordModal({ adminToken, onDone, onClose }) {
             </div>
             <div className="form-row">
               <label>Confirm New Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 placeholder="Repeat new password"
