@@ -10,3 +10,4 @@ scripts/artists.json
 wrangler.toml
 artists.json
 
+.DS_Store
