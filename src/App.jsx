@@ -7,6 +7,7 @@ import CategoryManager from './components/CategoryManager'
 import AdminLogin from './components/AdminLogin'
 import SetPasswordModal from './components/SetPasswordModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
+import HelpModal from './components/HelpModal'
 
 // ─── Toast helper ──────────────────────────────────────────────────────────────
 function useToast() {
@@ -54,6 +55,7 @@ export default function App() {
   const [showCategories, setShowCategories]     = useState(false)
   const [mustChangePassword, setMustChangePassword] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   const { toast, show: showToast } = useToast()
 
@@ -248,6 +250,13 @@ export default function App() {
           >All Fields</button>
         </div>
 
+        <button
+          className="btn btn-ghost"
+          style={{ fontSize: 13, color: 'var(--text-muted)', minWidth: 28, padding: '4px 8px' }}
+          onClick={() => setShowHelp(true)}
+          title="Getting started guide"
+        >?</button>
+
         {!isAdmin
           ? <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => setShowLogin(true)}>
               Admin
@@ -400,6 +409,8 @@ export default function App() {
           onClose={() => setShowChangePassword(false)}
         />
       )}
+
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
       {/* ── Toast ── */}
       {toast && (
