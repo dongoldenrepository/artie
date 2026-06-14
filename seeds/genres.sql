@@ -49,6 +49,7 @@ INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES 
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Insects',      '#65a30d', 'subject', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Technical',    '#cbd5e1', 'subject', 1);
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Vehicles',     '#dc2626', 'subject', 1);
+INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Travel',       '#0d9488', 'subject', 1);
 
 -- ── Style ─────────────────────────────────────────────────────
 INSERT OR IGNORE INTO genres (artist_id, name, color, tag_type, enabled) VALUES (ARTIST_ID_PLACEHOLDER, 'Impressionism',  '#3b82f6', 'style', 1);
