@@ -75,6 +75,34 @@ export async function onRequestPost({ env, request, data }) {
   if (!data.isAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // ── Trial mode enforcement ─────────────────────────────────────────────────
+  if (env.TRIAL_MODE === 'true') {
+    // Check expiry
+    if (env.TRIAL_EXPIRES) {
+      const expires = new Date(env.TRIAL_EXPIRES + 'T23:59:59Z')
+      if (Date.now() > expires.getTime()) {
+        return Response.json({
+          error: 'trial_expired',
+          message: 'Your free trial has ended. Contact us to activate your full account.',
+        }, { status: 403 })
+      }
+    }
+    // Check piece count
+    const limit = parseInt(env.TRIAL_LIMIT || '10')
+    const { results } = await env.DB
+      .prepare('SELECT COUNT(*) AS count FROM artworks WHERE artist_id = ?')
+      .bind(data.artistId)
+      .all()
+    const used = results[0]?.count ?? 0
+    if (used >= limit) {
+      return Response.json({
+        error: 'trial_limit',
+        message: `Trial limit of ${limit} pieces reached. Contact us to upgrade.`,
+      }, { status: 403 })
+    }
+  }
+
   try {
     const {
       title, medium, size, price, date_created,

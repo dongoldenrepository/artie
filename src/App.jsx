@@ -19,13 +19,50 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword }) {
+function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword, trialLocked }) {
   return (
     <div className="admin-bar">
-      <button className="btn btn-primary" onClick={onAddArtwork}>+ Add Artwork</button>
-      <button className="btn btn-primary" onClick={onAddPhoto}>📷 Add Photo</button>
-      <button className="btn btn-ghost" onClick={onCategories}>⚙ Catalog Settings</button>
-      <button className="btn btn-ghost" onClick={onChangePassword}>🔑 Change Password</button>
+      <button className="btn btn-primary" onClick={onAddArtwork} disabled={trialLocked}>+ Add Artwork</button>
+      <button className="btn btn-primary" onClick={onAddPhoto}   disabled={trialLocked}>📷 Add Photo</button>
+      <button className="btn btn-ghost"   onClick={onCategories}>⚙ Catalog Settings</button>
+      <button className="btn btn-ghost"   onClick={onChangePassword}>🔑 Change Password</button>
+    </div>
+  )
+}
+
+function TrialBanner({ artist }) {
+  if (!artist?.trial_mode) return null
+
+  const { trial_used, trial_limit, trial_days_left, trial_expired, trial_limit_hit } = artist
+  const locked = trial_expired || trial_limit_hit
+
+  const bg      = locked ? '#7f1d1d' : '#1e3a5f'
+  const border  = locked ? '#991b1b' : '#1d4ed8'
+  const message = trial_expired
+    ? 'Your free trial has ended.'
+    : trial_limit_hit
+      ? `You've reached the ${trial_limit}-piece trial limit.`
+      : `Free trial · ${trial_used} of ${trial_limit} pieces used · ${trial_days_left} day${trial_days_left === 1 ? '' : 's'} remaining`
+
+  return (
+    <div style={{
+      background: bg,
+      borderBottom: `1px solid ${border}`,
+      padding: '7px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 16,
+      fontSize: 13,
+      color: '#e2e8f0',
+    }}>
+      <span>{message}</span>
+      <a
+        href="mailto:don.golden.gml@gmail.com?subject=Artie upgrade"
+        style={{ color: '#93c5fd', fontWeight: 600, textDecoration: 'none' }}
+      >
+        {locked ? 'Contact us to upgrade →' : 'Upgrade anytime →'}
+      </a>
     </div>
   )
 }
@@ -268,13 +305,19 @@ export default function App() {
         }
       </header>
 
+      {/* ── Trial Banner ── */}
+      <TrialBanner artist={artists[0]} />
+
       {/* ── Admin Bar ── */}
-      {isAdmin && <AdminBar
-        onAddArtwork={() => { setUploadType('artwork'); setShowUpload(true) }}
-        onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
-        onCategories={() => setShowCategories(true)}
-        onChangePassword={() => setShowChangePassword(true)}
-      />}
+      {isAdmin && (
+        <AdminBar
+          onAddArtwork={() => { setUploadType('artwork'); setShowUpload(true) }}
+          onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
+          onCategories={() => setShowCategories(true)}
+          onChangePassword={() => setShowChangePassword(true)}
+          trialLocked={!!(artists[0]?.trial_expired || artists[0]?.trial_limit_hit)}
+        />
+      )}
 
       {/* ── Filter Bar ── */}
       <div className="filter-bar">
