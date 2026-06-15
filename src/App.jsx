@@ -71,59 +71,31 @@ function TrialBanner({ artist }) {
 }
 
 export default function App() {
-  // Viewer gate
+  // ── Viewer gate ────────────────────────────────────────────────────────────
   const [viewerUnlocked, setViewerUnlocked] = useState(() => !!getViewerToken())
-  const [artists, setArtists]           = useState([])
-
-  // If not yet unlocked, show PIN screen (pass artist name once we have it)
-  // We load artist name optimistically via a lightweight fetch only when needed
   const [gateArtistName, setGateArtistName] = useState(null)
 
-  useEffect(() => {
-    if (!viewerUnlocked) {
-      // Check whether VIEWER_PASSWORD is even configured on this site
-      fetch('/api/auth/viewer-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: '' }),
-      }).then(async r => {
-        const data = await r.json()
-        // If the site is open (no PIN configured), unlock immediately
-        if (r.ok && data.token === 'open') setViewerUnlocked(true)
-      }).catch(() => {})
-
-      // Fetch artist name for the gate screen
-      fetch('/api/artists').then(r => r.json()).then(data => {
-        const name = data?.artists?.[0]?.name
-        if (name) setGateArtistName(name)
-      }).catch(() => {})
-    }
-  }, [viewerUnlocked])
-
-  if (!viewerUnlocked) {
-    return <ViewerGate artistName={gateArtistName} onUnlocked={() => setViewerUnlocked(true)} />
-  }
-
-  // Data
+  // ── Data ───────────────────────────────────────────────────────────────────
+  const [artists, setArtists]           = useState([])
   const [artworks, setArtworks]         = useState([])
-  const [genres, setGenres]             = useState([])   // all tags: medium, subject, style
+  const [genres, setGenres]             = useState([])
   const [customFields, setCustomFields] = useState([])
   const [loading, setLoading]           = useState(true)
 
-  // UI state
+  // ── UI state ───────────────────────────────────────────────────────────────
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [filterGenre, setFilterGenre]         = useState(null)
   const [search, setSearch]                   = useState('')
-  const [searchScope, setSearchScope]         = useState('all') // 'title' | 'all'
+  const [searchScope, setSearchScope]         = useState('all')
 
-  // Admin
+  // ── Admin ──────────────────────────────────────────────────────────────────
   const [adminToken, setAdminToken]     = useState(() => sessionStorage.getItem('adminToken'))
   const [isAdmin, setIsAdmin]           = useState(false)
   const [showLogin, setShowLogin]       = useState(false)
   const [sortMode, setSortMode]         = useState(() => localStorage.getItem('artie-sort') || 'manual')
   const [draggedId, setDraggedId]       = useState(null)
   const [showUpload, setShowUpload]     = useState(false)
-  const [uploadType, setUploadType]     = useState('artwork') // 'artwork' | 'photograph'
+  const [uploadType, setUploadType]     = useState('artwork')
   const [showCategories, setShowCategories]     = useState(false)
   const [mustChangePassword, setMustChangePassword] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
@@ -132,7 +104,26 @@ export default function App() {
 
   const { toast, show: showToast } = useToast()
 
-  // Validate stored admin token on mount
+  // ── Viewer gate effect ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!viewerUnlocked) {
+      fetch('/api/auth/viewer-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: '' }),
+      }).then(async r => {
+        const data = await r.json()
+        if (r.ok && data.token === 'open') setViewerUnlocked(true)
+      }).catch(() => {})
+
+      fetch('/api/artists').then(r => r.json()).then(data => {
+        const name = data?.artists?.[0]?.name
+        if (name) setGateArtistName(name)
+      }).catch(() => {})
+    }
+  }, [viewerUnlocked])
+
+  // ── Validate stored admin token ────────────────────────────────────────────
   useEffect(() => {
     if (adminToken) {
       fetch('/api/auth/login', {
@@ -146,8 +137,9 @@ export default function App() {
     }
   }, [])
 
-  // Load initial data
+  // ── Load initial data ──────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
+    if (!viewerUnlocked) return
     try {
       const params = {}
       if (filterGenre) params.genre_id = filterGenre
@@ -170,9 +162,14 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [filterGenre, search, searchScope])
+  }, [viewerUnlocked, filterGenre, search, searchScope])
 
   useEffect(() => { loadAll() }, [loadAll])
+
+  // ── Gate: render PIN screen until unlocked (all hooks are above this) ──────
+  if (!viewerUnlocked) {
+    return <ViewerGate artistName={gateArtistName} onUnlocked={() => setViewerUnlocked(true)} />
+  }
 
   // Reload artwork detail after edit
   async function reloadSelected() {
