@@ -142,9 +142,14 @@ export async function onRequestDelete({ env, request, params, data }) {
     // Delete from DB (cascades to genres, showings, custom values)
     await env.DB.prepare('DELETE FROM artworks WHERE id = ?').bind(id).run()
 
-    // Delete image from R2
+    // Delete image from R2 only if no other artwork shares the same key
     if (row?.image_key && env.IMAGES) {
-      await env.IMAGES.delete(row.image_key).catch(() => {})
+      const stillUsed = await env.DB
+        .prepare('SELECT COUNT(*) AS n FROM artworks WHERE image_key = ?')
+        .bind(row.image_key).first()
+      if (!stillUsed?.n) {
+        await env.IMAGES.delete(row.image_key).catch(() => {})
+      }
     }
 
     return Response.json({ success: true })
