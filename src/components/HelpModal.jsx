@@ -29,6 +29,14 @@ export default function HelpModal({ onClose }) {
             </ul>
           </Section>
 
+          <Section title="Visitor Access — Viewer PIN">
+            <p>Your gallery is private by default. Visitors are prompted for a <b>Viewer PIN</b> when they first open your site. Share this PIN with anyone you want to have access — collectors, family, show jurors, etc.</p>
+            <ul>
+              <li>The PIN is remembered in the visitor's browser, so they only need to enter it once per device.</li>
+              <li>To change your Viewer PIN, log in as admin and click <b>🔢 Change Viewer PIN</b> in the toolbar. Your new PIN takes effect immediately — just share the updated PIN with anyone who needs access.</li>
+            </ul>
+          </Section>
+
           <Section title="Admin Mode">
             <p>Click <b>Admin</b> in the upper right and enter your password to unlock editing.</p>
             <p>Once logged in, the admin toolbar appears with:</p>
@@ -37,6 +45,7 @@ export default function HelpModal({ onClose }) {
               <li><b>📷 Add Photo</b> — quick upload shortcut.</li>
               <li><b>⚙ Catalog Settings</b> — manage your Medium, Subject, and Style tags.</li>
               <li><b>🔑 Change Password</b> — update your admin password.</li>
+              <li><b>🔢 Change Viewer PIN</b> — update the PIN you share with visitors.</li>
               <li><b>Log out</b> — end your admin session.</li>
             </ul>
             <p>In admin mode you can also <b>drag and drop</b> pieces in the grid to set your preferred order.</p>
