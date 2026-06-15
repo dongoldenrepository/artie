@@ -11,7 +11,7 @@
  *   node scripts/set-viewer-pin.mjs --master=mysecretpin    # also set master bypass PIN
  *   node scripts/set-viewer-pin.mjs --slug=kathy-golden     # one site only
  *
- * Requires env vars: CF_ACCOUNT_ID, CF_API_TOKEN
+ * Requires env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
  */
 
 import { readFileSync } from 'fs'
@@ -21,8 +21,8 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT      = path.resolve(__dirname, '..')
 
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID
-const CF_API_TOKEN  = process.env.CF_API_TOKEN
+const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
+const CF_API_TOKEN  = process.env.CLOUDFLARE_API_TOKEN
 
 if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
   console.error('\n❌  Missing env vars — run: source scripts/.env\n')

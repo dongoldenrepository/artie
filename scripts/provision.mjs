@@ -10,7 +10,7 @@
  *   node scripts/provision.mjs "Jane Smith" --slug=jane-smith-denver   (collision override)
  *   node scripts/provision.mjs "Jane Smith" --email=jane@example.com
  *
- * Requires env vars: CF_ACCOUNT_ID, CF_API_TOKEN
+ * Requires env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
  * (Copy scripts/.env.example → scripts/.env and source it, or set them in your shell)
  */
 
@@ -25,8 +25,8 @@ const __dirname  = path.dirname(__filename)
 const ROOT       = path.resolve(__dirname, '..')
 
 // ── Config ───────────────────────────────────────────────────────────────────
-const CF_ACCOUNT_ID        = process.env.CF_ACCOUNT_ID
-const CF_API_TOKEN         = process.env.CF_API_TOKEN
+const CF_ACCOUNT_ID        = process.env.CLOUDFLARE_ACCOUNT_ID
+const CF_API_TOKEN         = process.env.CLOUDFLARE_API_TOKEN
 const MASTER_VIEWER_PIN    = process.env.MASTER_VIEWER_PASSWORD  // your bypass PIN for all sites
 const GITHUB_OWNER         = 'dongoldenrepository'
 const GITHUB_REPO          = 'artie'
@@ -51,7 +51,7 @@ if (!artistName) die(
   'Usage: node scripts/provision.mjs "Jane Smith" [--trial] [--days=14] [--password=xxx] [--slug=jane-smith-denver] [--email=jane@example.com]'
 )
 if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die(
-  'Missing env vars — run: export CF_ACCOUNT_ID=xxx CF_API_TOKEN=xxx\n' +
+  'Missing env vars — run: export CLOUDFLARE_ACCOUNT_ID=xxx CLOUDFLARE_API_TOKEN=xxx\n' +
   '(See scripts/.env.example)'
 )
 

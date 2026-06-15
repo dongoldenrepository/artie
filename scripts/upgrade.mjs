@@ -11,14 +11,14 @@
  * Example:
  *   node scripts/upgrade.mjs jane-smith
  *
- * Requires env vars: CF_ACCOUNT_ID, CF_API_TOKEN
+ * Requires env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
  */
 
 import { fileURLToPath } from 'url'
 import { findBySlug, upsert } from './registry.mjs'
 
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID
-const CF_API_TOKEN  = process.env.CF_API_TOKEN
+const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
+const CF_API_TOKEN  = process.env.CLOUDFLARE_API_TOKEN
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function die(msg)  { console.error('\n❌  ' + msg + '\n'); process.exit(1) }
@@ -42,7 +42,7 @@ async function cfApi(method, urlPath, body) {
 // ── Args ──────────────────────────────────────────────────────────────────────
 const slug = process.argv[2]?.trim()
 if (!slug)              die('Usage: node scripts/upgrade.mjs <slug>')
-if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die('Missing env vars — run: export CF_ACCOUNT_ID=xxx CF_API_TOKEN=xxx')
+if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die('Missing env vars — run: export CLOUDFLARE_ACCOUNT_ID=xxx CLOUDFLARE_API_TOKEN=xxx')
 
 const entry = findBySlug(slug)
 if (!entry)             die(`"${slug}" not found in registry. Check scripts/artists.json.`)

@@ -11,7 +11,7 @@
  * Example:
  *   node scripts/decommission.mjs jane-smith 29a538c3-feff-4b09-9ed2-00d59495ff68
  *
- * Requires env vars: CF_ACCOUNT_ID, CF_API_TOKEN
+ * Requires env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN
  */
 
 import { execSync } from 'child_process'
@@ -23,8 +23,8 @@ import { findBySlug, markDecommissioned } from './registry.mjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT      = path.resolve(__dirname, '..')
 
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID
-const CF_API_TOKEN  = process.env.CF_API_TOKEN
+const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
+const CF_API_TOKEN  = process.env.CLOUDFLARE_API_TOKEN
 const R2_BUCKET     = 'artie-site-images'
 
 // ── Args: slug only (DB ID read from registry) ────────────────────────────────
@@ -40,7 +40,7 @@ if (!slug) die(
   '  If not in registry, pass DB ID as second arg: node scripts/decommission.mjs jane-smith <db-id>'
 )
 if (!CF_ACCOUNT_ID || !CF_API_TOKEN) die(
-  'Missing env vars — run: export CF_ACCOUNT_ID=xxx CF_API_TOKEN=xxx'
+  'Missing env vars — run: export CLOUDFLARE_ACCOUNT_ID=xxx CLOUDFLARE_API_TOKEN=xxx'
 )
 
 // Look up DB ID from registry (fallback to second arg)
