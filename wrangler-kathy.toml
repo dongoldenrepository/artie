@@ -1,15 +1,16 @@
-name = "kathy-artie"
+name = "artie-kathy-golden"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 [vars]
+VIEWER_PASSWORD = "1123"
 ARTIST_NAME = "Kathy Golden"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "kathy-catalog-db"
-database_id = "ad908b94-bdc3-46cb-a648-c1124f2e9429"
+database_name = "artie-kathy-golden-db"
+database_id = "e6743b01-5a7c-4ba6-9cac-b48f12c1b21a"
 
 [[r2_buckets]]
 binding = "IMAGES"
-bucket_name = "kathy-catalog-images"
+bucket_name = "artie-site-images"

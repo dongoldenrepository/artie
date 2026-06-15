@@ -8,6 +8,7 @@ import AdminLogin from './components/AdminLogin'
 import SetPasswordModal from './components/SetPasswordModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import HelpModal from './components/HelpModal'
+import ViewerGate, { getViewerToken } from './components/ViewerGate'
 
 // ─── Toast helper ──────────────────────────────────────────────────────────────
 function useToast() {
@@ -68,11 +69,43 @@ function TrialBanner({ artist }) {
 }
 
 export default function App() {
+  // Viewer gate
+  const [viewerUnlocked, setViewerUnlocked] = useState(() => !!getViewerToken())
+  const [artists, setArtists]           = useState([])
+
+  // If not yet unlocked, show PIN screen (pass artist name once we have it)
+  // We load artist name optimistically via a lightweight fetch only when needed
+  const [gateArtistName, setGateArtistName] = useState(null)
+
+  useEffect(() => {
+    if (!viewerUnlocked) {
+      // Check whether VIEWER_PASSWORD is even configured on this site
+      fetch('/api/auth/viewer-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: '' }),
+      }).then(async r => {
+        const data = await r.json()
+        // If the site is open (no PIN configured), unlock immediately
+        if (r.ok && data.token === 'open') setViewerUnlocked(true)
+      }).catch(() => {})
+
+      // Fetch artist name for the gate screen
+      fetch('/api/artists').then(r => r.json()).then(data => {
+        const name = data?.artists?.[0]?.name
+        if (name) setGateArtistName(name)
+      }).catch(() => {})
+    }
+  }, [viewerUnlocked])
+
+  if (!viewerUnlocked) {
+    return <ViewerGate artistName={gateArtistName} onUnlocked={() => setViewerUnlocked(true)} />
+  }
+
   // Data
   const [artworks, setArtworks]         = useState([])
   const [genres, setGenres]             = useState([])   // all tags: medium, subject, style
   const [customFields, setCustomFields] = useState([])
-  const [artists, setArtists]           = useState([])
   const [loading, setLoading]           = useState(true)
 
   // UI state

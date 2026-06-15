@@ -1,15 +1,16 @@
-name = "mary-lynch-artie"
+name = "artie-mary-lynch"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 [vars]
+VIEWER_PASSWORD = "1123"
 ARTIST_NAME = "Mary Lynch"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "artie-mlynch-db"
-database_id = "80ae86aa-0a86-4fed-92ff-f0eff4302e74"
+database_name = "artie-mary-lynch-db"
+database_id = "21da790f-4845-46a6-a4dd-34f31b669b91"
 
 [[r2_buckets]]
 binding = "IMAGES"
-bucket_name = "mary-lynch-artie-images"
+bucket_name = "artie-site-images"

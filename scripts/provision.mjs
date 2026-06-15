@@ -25,12 +25,14 @@ const __dirname  = path.dirname(__filename)
 const ROOT       = path.resolve(__dirname, '..')
 
 // ── Config ───────────────────────────────────────────────────────────────────
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID
-const CF_API_TOKEN  = process.env.CF_API_TOKEN
-const GITHUB_OWNER  = 'dongoldenrepository'
-const GITHUB_REPO   = 'artie'
-const R2_BUCKET     = 'artie-site-images'
-const TRIAL_LIMIT   = 10
+const CF_ACCOUNT_ID        = process.env.CF_ACCOUNT_ID
+const CF_API_TOKEN         = process.env.CF_API_TOKEN
+const MASTER_VIEWER_PIN    = process.env.MASTER_VIEWER_PASSWORD  // your bypass PIN for all sites
+const GITHUB_OWNER         = 'dongoldenrepository'
+const GITHUB_REPO          = 'artie'
+const R2_BUCKET            = 'artie-site-images'
+const TRIAL_LIMIT          = 10
+const DEFAULT_VIEWER_PIN   = '1123'
 
 // ── Args ─────────────────────────────────────────────────────────────────────
 const args       = process.argv.slice(2)
@@ -191,8 +193,12 @@ log(`✓ Tags seeded`)
 // ── Step 6: Create Pages project ──────────────────────────────────────────────
 step(6, 'Creating Cloudflare Pages project...')
 const envVars = {
-  ARTIST_NAME:    { value: artistName,  type: 'plain_text'  },
-  ADMIN_PASSWORD: { value: password,    type: 'secret_text' },
+  ARTIST_NAME:            { value: artistName,         type: 'plain_text'  },
+  ADMIN_PASSWORD:         { value: password,           type: 'secret_text' },
+  VIEWER_PASSWORD:        { value: DEFAULT_VIEWER_PIN, type: 'secret_text' },
+  ...(MASTER_VIEWER_PIN ? {
+    MASTER_VIEWER_PASSWORD: { value: MASTER_VIEWER_PIN, type: 'secret_text' },
+  } : {}),
   ...(isTrial ? {
     TRIAL_MODE:    { value: 'true',             type: 'plain_text' },
     TRIAL_EXPIRES: { value: trialExpires,        type: 'plain_text' },
@@ -258,9 +264,10 @@ console.log(`
 
    Email to ${artistName}:
    ─────────────────────────────────────────────
-   Site URL : https://${projectName}.pages.dev
-   Password : ${password}
-${isTrial ? `   Trial   : ${TRIAL_LIMIT} pieces · expires ${trialExpires}` : ''}
+   Site URL    : https://${projectName}.pages.dev
+   Admin PIN   : ${password}
+   Viewer PIN  : ${DEFAULT_VIEWER_PIN}
+${isTrial ? `   Trial      : ${TRIAL_LIMIT} pieces · expires ${trialExpires}` : ''}
 
    ⚠  Save for decommission:
    Slug     : ${slug}

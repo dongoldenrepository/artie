@@ -3,13 +3,14 @@ compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 [vars]
+VIEWER_PASSWORD = "1123"
 ARTIST_NAME = "Don Golden"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "artie-don-db"
-database_id = "d4d25e9c-6f93-4d02-a73e-93f07ee49348"
+database_name = "artie-don-golden-db"
+database_id = "9e78d790-ab6e-4c4a-bcf0-d8bba280f384"
 
 [[r2_buckets]]
 binding = "IMAGES"
-bucket_name = "artie-don-images"
+bucket_name = "artie-site-images"

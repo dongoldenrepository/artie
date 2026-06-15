@@ -15,6 +15,7 @@
  */
 
 import { execSync } from 'child_process'
+import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { findBySlug, markDecommissioned } from './registry.mjs'
@@ -54,7 +55,6 @@ const projectName = `artie-${slug}`
 const dbName      = `artie-${slug}-db`
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function die(msg)  { console.error('\n❌  ' + msg + '\n'); process.exit(1) }
 function log(msg)  { console.log('     ' + msg) }
 function step(n, msg) { console.log(`\n  ${n}. ${msg}`) }
 
@@ -117,7 +117,7 @@ if (imageKeys.length > 0) {
   step(2, `Deleting ${imageKeys.length} R2 image(s) from ${R2_BUCKET}...`)
   // Use wrangler CLI — simpler than S3-compatible API for object deletion
   const configFile = path.join(ROOT, `wrangler-${slug}.toml`)
-  const hasConfig  = (() => { try { return require('fs').existsSync(configFile) } catch { return false } })()
+  const hasConfig  = fs.existsSync(configFile)
   const configArg  = hasConfig ? `--config="${configFile}"` : `--config="${path.join(ROOT, 'wrangler-don.toml')}"`
 
   let deleted = 0
@@ -166,8 +166,8 @@ log(`✓ Marked as decommissioned in scripts/artists.json`)
 step(6, 'Cleaning up local config...')
 const configPath = path.join(ROOT, `wrangler-${slug}.toml`)
 try {
-  if (require('fs').existsSync(configPath)) {
-    require('fs').unlinkSync(configPath)
+  if (fs.existsSync(configPath)) {
+    fs.unlinkSync(configPath)
     log(`✓ Removed ${path.basename(configPath)}`)
   } else {
     log(`  (wrangler-${slug}.toml not found — already removed or was never created)`)
