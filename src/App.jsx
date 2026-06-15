@@ -9,6 +9,7 @@ import SetPasswordModal from './components/SetPasswordModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import HelpModal from './components/HelpModal'
 import ViewerGate, { getViewerToken } from './components/ViewerGate'
+import ChangeViewerPinModal from './components/ChangeViewerPinModal'
 
 // ─── Toast helper ──────────────────────────────────────────────────────────────
 function useToast() {
@@ -20,13 +21,14 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword, trialLocked }) {
+function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword, onChangeViewerPin, trialLocked }) {
   return (
     <div className="admin-bar">
       <button className="btn btn-primary" onClick={onAddArtwork} disabled={trialLocked}>+ Add Artwork</button>
       <button className="btn btn-primary" onClick={onAddPhoto}   disabled={trialLocked}>📷 Add Photo</button>
       <button className="btn btn-ghost"   onClick={onCategories}>⚙ Catalog Settings</button>
       <button className="btn btn-ghost"   onClick={onChangePassword}>🔑 Change Password</button>
+      <button className="btn btn-ghost"   onClick={onChangeViewerPin}>🔢 Change Viewer PIN</button>
     </div>
   )
 }
@@ -125,6 +127,7 @@ export default function App() {
   const [showCategories, setShowCategories]     = useState(false)
   const [mustChangePassword, setMustChangePassword] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showChangeViewerPin, setShowChangeViewerPin] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
 
   const { toast, show: showToast } = useToast()
@@ -348,6 +351,7 @@ export default function App() {
           onAddPhoto={() => { setUploadType('photograph'); setShowUpload(true) }}
           onCategories={() => setShowCategories(true)}
           onChangePassword={() => setShowChangePassword(true)}
+          onChangeViewerPin={() => setShowChangeViewerPin(true)}
           trialLocked={!!(artists[0]?.trial_expired || artists[0]?.trial_limit_hit)}
         />
       )}
@@ -483,6 +487,14 @@ export default function App() {
           adminToken={adminToken}
           onDone={handlePasswordChanged}
           onClose={() => setShowChangePassword(false)}
+        />
+      )}
+
+      {showChangeViewerPin && (
+        <ChangeViewerPinModal
+          adminToken={adminToken}
+          onDone={pin => { setShowChangeViewerPin(false); showToast(`Viewer PIN changed to ${pin}`) }}
+          onClose={() => setShowChangeViewerPin(false)}
         />
       )}
 
