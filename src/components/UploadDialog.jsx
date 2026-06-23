@@ -115,35 +115,35 @@ export default function UploadDialog({ genres = [], customFields, artistId = 1, 
           {/* ── Title ── */}
           <div className="form-row">
             <label>Title *</label>
-            <input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Untitled" autoFocus />
+            <input value={form.title} onChange={e => setField('title', e.target.value)} autoFocus />
           </div>
 
           <div className="form-row-2">
             <div className="form-row">
               <label>Medium</label>
-              <input value={form.medium} onChange={e => setField('medium', e.target.value)} placeholder="Oil on canvas" />
+              <input value={form.medium} onChange={e => setField('medium', e.target.value)} />
             </div>
             <div className="form-row">
               <label>Size</label>
-              <input value={form.size} onChange={e => setField('size', e.target.value)} placeholder='24" × 36"' />
+              <input value={form.size} onChange={e => setField('size', e.target.value)} />
             </div>
           </div>
 
           <div className="form-row-2">
             <div className="form-row">
               <label>Price ($)</label>
-              <input type="number" value={form.price} onChange={e => setField('price', e.target.value)} placeholder="Leave blank if NFS" />
+              <input type="number" value={form.price} onChange={e => setField('price', e.target.value)} />
             </div>
             <div className="form-row">
               <label>Date Created</label>
-              <input value={form.date_created} onChange={e => setField('date_created', e.target.value)} placeholder="2024" />
+              <input value={form.date_created} onChange={e => setField('date_created', e.target.value)} />
             </div>
           </div>
 
           <div className="form-row-2">
             <div className="form-row">
               <label>Current Location</label>
-              <input value={form.current_location} onChange={e => setField('current_location', e.target.value)} placeholder="Studio" />
+              <input value={form.current_location} onChange={e => setField('current_location', e.target.value)} />
             </div>
             <div className="form-row">
               <label>Available for Sale</label>
@@ -156,7 +156,7 @@ export default function UploadDialog({ genres = [], customFields, artistId = 1, 
 
           <div className="form-row">
             <label>Description</label>
-            <textarea value={form.description} onChange={e => setField('description', e.target.value)} rows={3} placeholder="Describe the piece…" />
+            <textarea value={form.description} onChange={e => setField('description', e.target.value)} rows={3} />
           </div>
 
           {/* ── Medium / Subject / Style tag pickers ── */}

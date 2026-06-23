@@ -388,22 +388,22 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
         </div>
         <div className="form-row">
           <label>Size</label>
-          <input value={form.size} onChange={e => setField('size', e.target.value)} placeholder='24" × 36"' />
+          <input value={form.size} onChange={e => setField('size', e.target.value)} />
         </div>
       </div>
       <div className="form-row-2" style={{ marginBottom: 12 }}>
         <div className="form-row">
           <label>Price ($)</label>
-          <input type="number" value={form.price} onChange={e => setField('price', e.target.value)} placeholder="0" />
+          <input type="number" value={form.price} onChange={e => setField('price', e.target.value)} />
         </div>
         <div className="form-row">
           <label>Date Created</label>
-          <input value={form.date_created} onChange={e => setField('date_created', e.target.value)} placeholder="2024" />
+          <input value={form.date_created} onChange={e => setField('date_created', e.target.value)} />
         </div>
       </div>
       <div className="form-row">
         <label>Current Location</label>
-        <input value={form.current_location} onChange={e => setField('current_location', e.target.value)} placeholder="Studio, gallery name…" />
+        <input value={form.current_location} onChange={e => setField('current_location', e.target.value)} />
       </div>
       <div className="form-row">
         <label>Available for Sale</label>
@@ -479,7 +479,6 @@ function EditForm({ form, setField, toggleGenre, artwork, imagePreview, onImageP
               onChange={e => {
                 const next = [...form.history]; next[i] = e.target.value; setField('history', next)
               }}
-              placeholder="e.g. Gold Gallery · Santa Fe · Oct 2023 · Best in Show"
               style={{ flex: 1 }}
             />
             <button className="remove-btn" style={{ flexShrink: 0 }}
@@ -507,7 +506,7 @@ function PrintForm({ print, setPrint, onSave, onCancel, saveLabel = 'Add Print' 
       <div className="form-row-2">
         <div className="form-row">
           <label>Size</label>
-          <input placeholder='e.g. 16"×20"' value={print.size} onChange={e => setPrint(p => ({ ...p, size: e.target.value }))} />
+          <input value={print.size} onChange={e => setPrint(p => ({ ...p, size: e.target.value }))} />
         </div>
         <div className="form-row">
           <label>Medium</label>
@@ -519,7 +518,7 @@ function PrintForm({ print, setPrint, onSave, onCancel, saveLabel = 'Add Print' 
       <div className="form-row-2">
         <div className="form-row">
           <label>Price ($)</label>
-          <input type="number" placeholder="0" value={print.price} onChange={e => setPrint(p => ({ ...p, price: e.target.value }))} />
+          <input type="number" value={print.price} onChange={e => setPrint(p => ({ ...p, price: e.target.value }))} />
         </div>
         <div className="form-row">
           <label>Status</label>
@@ -531,15 +530,15 @@ function PrintForm({ print, setPrint, onSave, onCancel, saveLabel = 'Add Print' 
       </div>
       <div className="form-row">
         <label>Current Location</label>
-        <input placeholder="Studio, gallery…" value={print.current_location} onChange={e => setPrint(p => ({ ...p, current_location: e.target.value }))} />
+        <input value={print.current_location} onChange={e => setPrint(p => ({ ...p, current_location: e.target.value }))} />
       </div>
       <div className="form-row">
         <label>Sold To</label>
-        <input placeholder="Customer name" value={print.sold_to} onChange={e => setPrint(p => ({ ...p, sold_to: e.target.value }))} />
+        <input value={print.sold_to} onChange={e => setPrint(p => ({ ...p, sold_to: e.target.value }))} />
       </div>
       <div className="form-row">
         <label>Notes</label>
-        <input placeholder="Optional notes" value={print.notes} onChange={e => setPrint(p => ({ ...p, notes: e.target.value }))} />
+        <input value={print.notes} onChange={e => setPrint(p => ({ ...p, notes: e.target.value }))} />
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button className="btn btn-primary" style={{ fontSize: 12, padding: '5px 14px' }} onClick={onSave}>{saveLabel}</button>
