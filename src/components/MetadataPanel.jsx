@@ -9,7 +9,7 @@ const PRICE_FMT = v => v != null ? '$' + Number(v).toLocaleString() : '—'
 const DATE_FMT  = v => v || '—'
 
 export default function MetadataPanel({
-  artwork, isAdmin, adminToken, isOpen,
+  artwork, existingTitles = [], isAdmin, adminToken, isOpen,
   editing = false, onEditingChange,
   onToggle, onClose, onSaved,
   onDirtyChange,
@@ -197,7 +197,14 @@ export default function MetadataPanel({
         <div className="panel-header">
           <div style={{ flex: 1 }}>
             {editing
-              ? <input value={form.title} onChange={e => setField('title', e.target.value)} style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600 }} />
+              ? <>
+                  <input value={form.title} onChange={e => setField('title', e.target.value)} style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600 }} />
+                  {form.title.trim() && existingTitles.some(t => t.toLowerCase() === form.title.trim().toLowerCase()) && (
+                    <div style={{ fontSize: 12, color: '#b45309', marginTop: 4 }}>
+                      ⚠️ Another artwork already has this title.
+                    </div>
+                  )}
+                </>
               : <div className="panel-title">{artwork.title}</div>
             }
             <div className="panel-artist">{artwork.artist_name}</div>

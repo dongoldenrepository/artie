@@ -3,7 +3,7 @@ import { imgSrc, api } from '../utils/api'
 import MetadataPanel from './MetadataPanel'
 
 export default function ArtworkDetail({
-  artwork, allArtworks, isAdmin, adminToken,
+  artwork, allArtworks, existingTitles = [], isAdmin, adminToken,
   onClose, onSaved, onSavedAndClose, onNavigate, onDelete
 }) {
   const [panelOpen, setPanelOpen] = useState(false)
@@ -176,6 +176,7 @@ export default function ArtworkDetail({
       {/* Slide-up metadata panel */}
       <MetadataPanel
         artwork={enriched}
+        existingTitles={existingTitles.filter(t => t !== artwork?.title)}
         isAdmin={isAdmin}
         adminToken={adminToken}
         isOpen={panelOpen}

@@ -438,6 +438,7 @@ export default function App() {
         <ArtworkDetail
           artwork={selectedArtwork}
           allArtworks={displayed}
+          existingTitles={artworks.map(a => a.title)}
           isAdmin={isAdmin}
           adminToken={adminToken}
           onClose={() => setSelectedArtwork(null)}
@@ -456,6 +457,7 @@ export default function App() {
           artistId={artists[0]?.id || 1}
           artworkType={uploadType}
           adminToken={adminToken}
+          existingTitles={artworks.map(a => a.title)}
           onClose={() => setShowUpload(false)}
           onSaved={() => { loadAll(); showToast(uploadType === 'photograph' ? 'Photo added!' : 'Artwork added!') }}
         />

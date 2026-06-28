@@ -3,7 +3,7 @@ import { api } from '../utils/api'
 
 const TAG_LABELS = { medium: 'Medium', subject: 'Subject', style: 'Style' }
 
-export default function UploadDialog({ genres = [], customFields, artistId = 1, defaultMedium = '', artworkType = 'artwork', adminToken, onClose, onSaved }) {
+export default function UploadDialog({ genres = [], customFields, artistId = 1, defaultMedium = '', artworkType = 'artwork', adminToken, existingTitles = [], onClose, onSaved }) {
   const isPhoto = artworkType === 'photograph'
   const [form, setForm] = useState({
     title: '', medium: defaultMedium, size: '', price: '',
@@ -116,6 +116,11 @@ export default function UploadDialog({ genres = [], customFields, artistId = 1, 
           <div className="form-row">
             <label>Title *</label>
             <input value={form.title} onChange={e => setField('title', e.target.value)} autoFocus />
+            {form.title.trim() && existingTitles.some(t => t.toLowerCase() === form.title.trim().toLowerCase()) && (
+              <div style={{ fontSize: 12, color: '#b45309', marginTop: 4 }}>
+                ⚠️ Another artwork already has this title.
+              </div>
+            )}
           </div>
 
           <div className="form-row-2">
