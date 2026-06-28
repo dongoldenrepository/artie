@@ -84,7 +84,8 @@ export default function App() {
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [selectedArtwork, setSelectedArtwork] = useState(null)
-  const [filterGenre, setFilterGenre]         = useState(null)
+  const [filterSubject, setFilterSubject]     = useState(null)  // subject/style chip
+  const [filterMedium, setFilterMedium]       = useState(null)  // medium chip (AND with filterSubject)
   const [search, setSearch]                   = useState('')
   const [searchScope, setSearchScope]         = useState('all')
 
@@ -142,9 +143,8 @@ export default function App() {
     if (!viewerUnlocked) return
     try {
       const params = {}
-      if (filterGenre) params.genre_id = filterGenre
-      if (search)      params.search   = search
-      if (search)      params.search_scope = searchScope
+      if (search) params.search = search
+      if (search) params.search_scope = searchScope
 
       const [awRes, genreRes, fieldRes, artRes] = await Promise.all([
         api.getArtworks(params),
@@ -162,7 +162,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [viewerUnlocked, filterGenre, search, searchScope])
+  }, [viewerUnlocked, search, searchScope])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -277,9 +277,15 @@ export default function App() {
     }
   }
 
-  const displayed = sortMode === 'title'
+  let displayed = sortMode === 'title'
     ? [...artworks].sort((a, b) => a.title.localeCompare(b.title))
     : artworks
+  if (filterSubject) {
+    displayed = displayed.filter(aw => (aw.genres || []).some(g => g.id === filterSubject))
+  }
+  if (filterMedium) {
+    displayed = displayed.filter(aw => (aw.genres || []).some(g => g.id === filterMedium))
+  }
 
   // Only show filter buttons for genres actually used by current artworks
   const usedGenreIds = new Set(artworks.flatMap(aw => (aw.genres || []).map(g => g.id)))
@@ -355,43 +361,74 @@ export default function App() {
 
       {/* ── Filter Bar ── */}
       <div className="filter-bar">
-        {/* All filter */}
-        <button
-          className={`filter-chip ${!filterGenre ? 'active' : ''}`}
-          style={!filterGenre ? { background: '#1a1a1a', borderColor: '#1a1a1a' } : {}}
-          onClick={() => setFilterGenre(null)}
-        >
-          All
-        </button>
 
-        {/* Tag filters — only show tags used by actual artworks */}
-        {['subject', 'medium', 'style'].map(type => {
-          const group = genres.filter(g => g.tag_type === type && usedGenreIds.has(g.id))
-          if (!group.length) return null
-          return group.map(g => (
-            <button
-              key={g.id}
-              className={`filter-chip ${filterGenre === g.id ? 'active' : ''}`}
-              style={filterGenre === g.id ? { background: g.color, borderColor: g.color } : {}}
-              onClick={() => setFilterGenre(filterGenre === g.id ? null : g.id)}
-            >
-              <span className="filter-chip-dot" style={{ background: g.color }} />
-              {g.name}
-            </button>
-          ))
-        })}
+        {/* Row 1: Subject / Style chips */}
+        <div className="filter-bar-row">
+          <button
+            className={`filter-chip ${!filterSubject ? 'active' : ''}`}
+            style={!filterSubject ? { background: '#1a1a1a', borderColor: '#1a1a1a' } : {}}
+            onClick={() => setFilterSubject(null)}
+          >
+            All
+          </button>
 
-        <div className="filter-bar-right">
-          <div className="search-scope-toggle">
-            <button className={`scope-btn ${sortMode === 'title' ? 'active' : ''}`} onClick={() => toggleSortMode('title')} title="Sort alphabetically by title">Title</button>
-            <button className={`scope-btn ${sortMode === 'manual' ? 'active' : ''}`} onClick={() => toggleSortMode('manual')} title={isAdmin ? 'Manual order — drag to rearrange' : 'Manual order'}>Manual</button>
-          </div>
-          {!loading && (
-            <span className="artwork-count">
-              {displayed.length} {displayed.length === 1 ? 'piece' : 'pieces'}
-            </span>
+          {['subject', 'style'].map(type =>
+            genres
+              .filter(g => g.tag_type === type && usedGenreIds.has(g.id))
+              .map(g => (
+                <button
+                  key={g.id}
+                  className={`filter-chip ${filterSubject === g.id ? 'active' : ''}`}
+                  style={filterSubject === g.id ? { background: g.color, borderColor: g.color } : {}}
+                  onClick={() => setFilterSubject(filterSubject === g.id ? null : g.id)}
+                >
+                  <span className="filter-chip-dot" style={{ background: g.color }} />
+                  {g.name}
+                </button>
+              ))
           )}
+
+          <div className="filter-bar-right">
+            <div className="search-scope-toggle">
+              <button className={`scope-btn ${sortMode === 'title' ? 'active' : ''}`} onClick={() => toggleSortMode('title')} title="Sort alphabetically by title">Title</button>
+              <button className={`scope-btn ${sortMode === 'manual' ? 'active' : ''}`} onClick={() => toggleSortMode('manual')} title={isAdmin ? 'Manual order — drag to rearrange' : 'Manual order'}>Manual</button>
+            </div>
+            {!loading && (
+              <span className="artwork-count">
+                {displayed.length} {displayed.length === 1 ? 'piece' : 'pieces'}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Row 2: Medium chips — only rendered when medium tags exist */}
+        {genres.some(g => g.tag_type === 'medium' && usedGenreIds.has(g.id)) && (
+          <div className="filter-bar-row">
+            <button
+              className={`filter-chip ${!filterMedium ? 'active' : ''}`}
+              style={!filterMedium ? { background: '#1a1a1a', borderColor: '#1a1a1a' } : {}}
+              onClick={() => setFilterMedium(null)}
+            >
+              All
+            </button>
+
+            {genres
+              .filter(g => g.tag_type === 'medium' && usedGenreIds.has(g.id))
+              .map(g => (
+                <button
+                  key={g.id}
+                  className={`filter-chip ${filterMedium === g.id ? 'active' : ''}`}
+                  style={filterMedium === g.id ? { background: g.color, borderColor: g.color } : {}}
+                  onClick={() => setFilterMedium(filterMedium === g.id ? null : g.id)}
+                >
+                  <span className="filter-chip-dot" style={{ background: g.color }} />
+                  {g.name}
+                </button>
+              ))
+            }
+          </div>
+        )}
+
       </div>
 
       {/* ── Main Grid ── */}
@@ -405,9 +442,9 @@ export default function App() {
           <div className="artwork-grid">
             {displayed.length === 0 ? (
               <div className="empty-state">
-                <h3>{search || filterGenre ? 'No artworks found' : 'No artworks yet'}</h3>
-                <p>{search || filterGenre ? 'Try a different search or filter.' : isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
-                {!search && !filterGenre && isAdmin && (
+                <h3>{search || filterSubject || filterMedium ? 'No artworks found' : 'No artworks yet'}</h3>
+                <p>{search || filterSubject || filterMedium ? 'Try a different search or filter.' : isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
+                {!search && !filterSubject && !filterMedium && isAdmin && (
                   <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
                     + Add Artwork
                   </button>
