@@ -51,6 +51,14 @@ export default function ArtworkDetail({
   useEffect(() => { setPanelOpen(false); setEditing(false) }, [artwork?.id])
 
   function navigate(dir) {
+    // First cycle through images within this artwork
+    if (dir === 'next' && activeIdx < allImages.length - 1) {
+      setActiveIdx(activeIdx + 1); return
+    }
+    if (dir === 'prev' && activeIdx > 0) {
+      setActiveIdx(activeIdx - 1); return
+    }
+    // At boundary — move to adjacent artwork
     if (!allArtworks?.length) return
     const idx = allArtworks.findIndex(a => a.id === artwork.id)
     if (idx < 0) return
