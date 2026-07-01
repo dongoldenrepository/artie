@@ -18,6 +18,7 @@ export async function onRequestGet({ env, request, data }) {
         ar.name AS artist_name, ar.artist_type,
         c.name AS category_name, c.color AS category_color, c.is_printable,
         GROUP_CONCAT(g.id   || '~~' || g.name || '~~' || g.color || '~~' || COALESCE(g.tag_type,'subject'), '||') AS genres_raw,
+        (SELECT GROUP_CONCAT(field_id || '~~' || value, '||') FROM artwork_custom_values WHERE artwork_id = a.id) AS custom_vals_raw,
         (SELECT COUNT(*) FROM prints p WHERE p.artwork_id = a.id) AS print_count,
         (SELECT COUNT(*) FROM prints p WHERE p.artwork_id = a.id AND p.is_available = 1) AS prints_available
       FROM artworks a
@@ -55,8 +56,14 @@ export async function onRequestGet({ env, request, data }) {
             return { id: Number(id), name, color, tag_type: tag_type || 'subject' }
           })
         : []
-      const { genres_raw, ...rest } = row
-      return { ...rest, genres }
+      const custom_fields = row.custom_vals_raw
+        ? row.custom_vals_raw.split('||').map(v => {
+            const [field_id, value] = v.split('~~')
+            return { field_id: Number(field_id), value }
+          })
+        : []
+      const { genres_raw, custom_vals_raw, ...rest } = row
+      return { ...rest, genres, custom_fields }
     })
 
     // Filter by genre after join (avoids complex SQL)

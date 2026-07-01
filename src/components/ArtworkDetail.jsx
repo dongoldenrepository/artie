@@ -30,6 +30,17 @@ export default function ArtworkDetail({
     ...extraImages.map(i => ({ key: i.image_key, id: i.id, caption: i.caption }))
   ]
 
+  // Preload adjacent images so navigation feels instant
+  useEffect(() => {
+    if (allImages.length <= 1) return
+    const toPreload = [activeIdx + 1, activeIdx + 2, activeIdx - 1]
+      .filter(i => i >= 0 && i < allImages.length)
+    toPreload.forEach(i => {
+      const img = new Image()
+      img.src = imgSrc(allImages[i].key)
+    })
+  }, [activeIdx, allImages])
+
   // Close on Escape, navigate on arrow keys
   const handleKey = useCallback((e) => {
     // Don't intercept keys while typing in form fields
@@ -154,6 +165,7 @@ export default function ArtworkDetail({
                 transition: 'opacity 0.15s, outline 0.15s'
               }}>
                 <img src={imgSrc(img.key)} alt={img.caption || `View ${idx + 1}`}
+                  loading="lazy"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             ))}
