@@ -54,12 +54,18 @@ async function putGenres(artworkId, genreIds) {
   return res.json()
 }
 
+// Keywords that need word-boundary matching (to avoid "pen" matching "pencil", etc.)
+const WHOLE_WORD_KEYS = new Set(['pen', 'oil', 'ink', 'gel'])
+
 function inferMediumGenreIds(medium, mediumGenres) {
   if (!medium) return []
   const mLower = medium.toLowerCase()
   const matched = new Set()
   for (const [kw, genreName] of Object.entries(MEDIUM_GENRE_MAP)) {
-    if (mLower.includes(kw)) {
+    const hit = WHOLE_WORD_KEYS.has(kw)
+      ? new RegExp(`\\b${kw}\\b`).test(mLower)
+      : mLower.includes(kw)
+    if (hit) {
       const g = mediumGenres.find(g => g.name.toLowerCase() === genreName)
       if (g) matched.add(g.id)
     }

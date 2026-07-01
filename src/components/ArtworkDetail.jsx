@@ -51,7 +51,7 @@ export default function ArtworkDetail({
     if (e.key === 'ArrowRight') navigate('next')
     if (e.key === 'ArrowLeft')  navigate('prev')
     if (e.key === 'i') setPanelOpen(o => !o)
-  }, [artwork, allArtworks, editing, panelDirty]) // eslint-disable-line
+  }, [artwork, allArtworks, editing, panelDirty, activeIdx, allImages.length]) // eslint-disable-line
 
   useEffect(() => {
     document.addEventListener('keydown', handleKey)

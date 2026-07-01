@@ -6,8 +6,7 @@ compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 [vars]
-ARTIST_NAME    = "Taylor Mershon"
-ADMIN_PASSWORD = "NkwdP8w4GT"
+ARTIST_NAME = "Taylor Mershon"
 
 
 [[d1_databases]]

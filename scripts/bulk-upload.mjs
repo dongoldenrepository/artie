@@ -26,14 +26,32 @@
  *     --token    "MyArtie2026" \
  *     [--mode    per-image|per-folder]  (default: per-image) \
  *     [--tags    "Illustration,Children's"]  forced genres on every artwork \
+ *     [--max-px  2000]   resize longest side to this many pixels before upload \
+ *     [--skip-generic]   skip files with auto-generated names (UUIDs, img_XXXX, frame_N, etc.) \
+ *                        and write a skipped-<folder>-<date>.md report \
  *     [--url     "https://artie-taylor-mershon.pages.dev"] \
  *     [--dry-run]
+ *
+ * Requires: npm install --save-dev sharp   (for --max-px resizing)
  */
 
 import fs   from 'fs'
 import path from 'path'
 
 // FormData and Blob are globals in Node 18+
+
+// Lazy-load sharp only when resizing is requested
+let sharp = null
+async function loadSharp() {
+  if (sharp) return sharp
+  try {
+    sharp = (await import('sharp')).default
+  } catch {
+    console.error('✗ sharp not installed. Run: npm install --save-dev sharp')
+    process.exit(1)
+  }
+  return sharp
+}
 
 // ── Args ──────────────────────────────────────────────────────────────────────
 const args    = process.argv.slice(2)
@@ -42,10 +60,13 @@ const getArg  = name => { const i = args.indexOf(name); return i !== -1 ? args[i
 const folder   = getArg('--folder')
 const type     = getArg('--type')
 const token    = getArg('--token')
-const baseUrl  = getArg('--url')  || 'https://artie-taylor-mershon.pages.dev'
-const mode     = getArg('--mode') || 'per-image'   // 'per-image' | 'per-folder'
-const tagsArg  = getArg('--tags') || ''            // comma-separated genre names forced onto every artwork
-const dryRun   = args.includes('--dry-run')
+const baseUrl  = getArg('--url')    || 'https://artie-taylor-mershon.pages.dev'
+const mode     = getArg('--mode')   || 'per-image'   // 'per-image' | 'per-folder'
+const tagsArg  = getArg('--tags')   || ''            // comma-separated genre names forced onto every artwork
+const maxPx       = getArg('--max-px') ? Number(getArg('--max-px')) : null  // resize longest side
+const onlyDir     = getArg('--only')  || ''   // process only this subfolder name (case-insensitive)
+const skipGeneric = args.includes('--skip-generic')  // skip auto-named files and write report
+const dryRun      = args.includes('--dry-run')
 
 if (!folder || !type || !token) {
   console.error('Usage: node scripts/bulk-upload.mjs --folder <path> --type <medium-type> --token <password> [--mode per-image|per-folder] [--url <url>] [--dry-run]')
@@ -75,6 +96,16 @@ const ON_SURFACE = /\bon\s+(paper|canvas|board|linen|wood|panel|fabric|vellum|my
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const isImage     = f => IMAGE_EXTS.has(path.extname(f).toLowerCase())
 const isResized   = f => f.toLowerCase().includes('_resized')
+
+// Filenames that are clearly auto-generated and not meaningful artwork titles
+const GENERIC_FILENAME_RE = /^([0-9a-f]{8}-[0-9a-f]{4}|img_\d|frame_\d|asset_\d|\d{4}[-_]\d{2}[-_]\d{2}|photo_(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|[_\d]))/i
+function isGenericFilename(basename) {
+  // Normalize to lowercase+underscores before testing so "Frame 1.jpg" matches frame_\d
+  const stem = path.basename(basename, path.extname(basename))
+    .toLowerCase()
+    .replace(/[\s,]+/g, '_')
+  return GENERIC_FILENAME_RE.test(stem)
+}
 
 /** lowercase + spaces→underscores + strip non-portable chars, keep extension */
 function normalizeFilename(filename) {
@@ -208,6 +239,8 @@ const MEDIUM_GENRE_MAP = {
   'sculpture':   'sculpture',
 }
 
+const WHOLE_WORD_KEYS = new Set(['pen', 'oil', 'ink', 'gel'])
+
 /** Return medium genre IDs inferred from a parsed medium string */
 function inferMediumGenres(medium, allGenres) {
   if (!medium) return []
@@ -215,7 +248,10 @@ function inferMediumGenres(medium, allGenres) {
   const mediumGenres = allGenres.filter(g => g.tag_type === 'medium')
   const matched = new Set()
   for (const [kw, genreName] of Object.entries(MEDIUM_GENRE_MAP)) {
-    if (mLower.includes(kw)) {
+    const hit = WHOLE_WORD_KEYS.has(kw)
+      ? new RegExp(`\\b${kw}\\b`).test(mLower)
+      : mLower.includes(kw)
+    if (hit) {
       const g = mediumGenres.find(g => g.name.toLowerCase() === genreName)
       if (g) matched.add(g.id)
     }
@@ -261,13 +297,25 @@ async function apiGet(endpoint) {
 }
 
 async function uploadImage(filePath) {
-  const buf      = fs.readFileSync(filePath)
-  const ext      = path.extname(filePath).toLowerCase()
-  const mimeType = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
-                     '.heic': 'image/heic', '.heif': 'image/heif' }[ext] || 'image/jpeg'
-  const blob     = new Blob([buf], { type: mimeType })
-  const fd       = new FormData()
-  fd.append('image', blob, normalizeFilename(path.basename(filePath)))
+  let buf = fs.readFileSync(filePath)
+  const ext = path.extname(filePath).toLowerCase()
+
+  // Resize if --max-px is set
+  let mimeType = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
+                   '.heic': 'image/heic', '.heif': 'image/heif' }[ext] || 'image/jpeg'
+  if (maxPx) {
+    const sh = await loadSharp()
+    buf = await sh(buf)
+      .rotate()                          // auto-orient from EXIF
+      .resize({ width: maxPx, height: maxPx, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })            // always output JPEG for photos
+      .toBuffer()
+    mimeType = 'image/jpeg'
+  }
+
+  const blob = new Blob([buf], { type: mimeType })
+  const fd   = new FormData()
+  fd.append('image', blob, normalizeFilename(path.basename(filePath)).replace(/\.[^.]+$/, '.jpg'))
 
   const res = await fetch(`${baseUrl}/api/images/upload`, {
     method:  'POST',
@@ -307,21 +355,33 @@ async function addExtraImage(artworkId, imageKey, sortOrder) {
 }
 
 // ── Scan folder ───────────────────────────────────────────────────────────────
-function scanFolder(folderPath) {
+function scanFolder(folderPath, skipped = []) {
   const entries  = fs.readdirSync(folderPath, { withFileTypes: true })
   const artworks = []
+
+  function filterImages(files, dirLabel) {
+    const kept = [], dropped = []
+    for (const f of files) {
+      if (skipGeneric && isGenericFilename(path.basename(f))) dropped.push({ file: f, folder: dirLabel })
+      else kept.push(f)
+    }
+    skipped.push(...dropped)
+    return kept
+  }
 
   // Subfolders
   const subdirs = entries
     .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+    .filter(e => !onlyDir || e.name.toLowerCase() === onlyDir.toLowerCase())
     .sort((a, b) => a.name.localeCompare(b.name))
 
   for (const dir of subdirs) {
     const dirPath = path.join(folderPath, dir.name)
-    const images  = fs.readdirSync(dirPath)
+    const rawImages = fs.readdirSync(dirPath)
       .filter(f => isImage(f) && !f.startsWith('.') && !isResized(f))
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
       .map(f => path.join(dirPath, f))
+    const images = filterImages(rawImages, dir.name)
     if (images.length === 0) continue
 
     const isGeneric = GENERIC_DIRS.has(dir.name.toLowerCase().trim())
@@ -358,32 +418,79 @@ function scanFolder(folderPath) {
   }
 
   // Loose image files at root
-  const loose = entries
+  const looseRaw = entries
     .filter(e => e.isFile() && isImage(e.name) && !e.name.startsWith('.') && !isResized(e.name))
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+    .map(e => path.join(folderPath, e.name))
+  const loose = filterImages(looseRaw, '(root)')
 
-  for (const file of loose) {
-    const stem = path.basename(file.name, path.extname(file.name))
+  for (const filePath of loose) {
+    const stem = path.basename(filePath, path.extname(filePath))
     const { title, medium, year } = parseName(stem)
-    artworks.push({ title, medium, year, images: [path.join(folderPath, file.name)], source: file.name })
+    artworks.push({ title, medium, year, images: [filePath], source: path.basename(filePath) })
   }
 
   return artworks
+}
+
+// ── Skip report ───────────────────────────────────────────────────────────────
+function writeSkipReport(skipped, folderPath) {
+  if (!skipped.length) return
+  const folderName = path.basename(folderPath)
+  const date       = new Date().toISOString().slice(0, 10)
+  const reportPath = path.join(process.cwd(), `skipped-${folderName}-${date}.md`)
+
+  const byFolder = {}
+  for (const { file, folder: f } of skipped) {
+    if (!byFolder[f]) byFolder[f] = []
+    byFolder[f].push(path.basename(file))
+  }
+
+  const lines = [
+    `# Skipped Files — ${folderName} (${date})`,
+    '',
+    'These files were skipped during bulk upload because their filenames are',
+    'auto-generated (UUIDs, img_XXXX, frame_N, photo_date, etc.) and would not',
+    'produce useful artwork titles.',
+    '',
+    '## How to add them',
+    '',
+    '1. Rename each file to a descriptive name, e.g.:',
+    '   `img_0088.jpg` → `sunset-over-mountains-procreate-2023.jpg`',
+    '2. Re-run the bulk upload script for those files, or',
+    '3. Upload them individually via the Admin panel on the site.',
+    '',
+    '## Skipped files by folder',
+    '',
+  ]
+
+  for (const [fld, files] of Object.entries(byFolder)) {
+    lines.push(`### ${fld}`)
+    lines.push('')
+    for (const f of files) lines.push(`- \`${f}\``)
+    lines.push('')
+  }
+
+  fs.writeFileSync(reportPath, lines.join('\n'))
+  console.log(`\n📋 Skip report written: ${reportPath}`)
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   if (!fs.existsSync(folder)) { console.error(`Folder not found: ${folder}`); process.exit(1) }
 
-  const artworks    = scanFolder(folder)
+  const skipped     = []
+  const artworks    = scanFolder(folder, skipped)
   const totalImages = artworks.reduce((n, a) => n + a.images.length, 0)
 
-  if (artworks.length === 0) { console.log('No artwork found.'); return }
+  if (artworks.length === 0 && skipped.length === 0) { console.log('No artwork found.'); return }
 
   console.log(`\n📁 Folder      : ${folder}`)
   console.log(`🎨 Medium Type : ${type}`)
   console.log(`🌐 Site        : ${baseUrl}`)
-  console.log(`🖼  Artworks    : ${artworks.length}  (${totalImages} total images)\n`)
+  console.log(`🖼  Artworks    : ${artworks.length}  (${totalImages} total images)`)
+  if (skipped.length) console.log(`⏭  Skipped     : ${skipped.length} auto-named files (see report)`)
+  console.log()
 
   // Fetch all genres for tag inference (subject + medium)
   let allGenres = [], subjectGenres = [], forcedGenreIds = []
@@ -431,6 +538,7 @@ async function main() {
       }
       console.log()
     }
+    writeSkipReport(skipped, folder)
     return
   }
 
@@ -479,6 +587,8 @@ async function main() {
   console.log(`\n── Done ──`)
   console.log(`✓ ${succeeded} artworks uploaded`)
   if (failed > 0) console.log(`✗ ${failed} failed — re-run to retry`)
+
+  writeSkipReport(skipped, folder)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
