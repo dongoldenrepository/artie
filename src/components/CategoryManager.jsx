@@ -72,7 +72,7 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
     style:   { name: '', color: '#8b5cf6' },
   })
 
-  const [newField, setNewField] = useState({ name: '', field_type: 'text' })
+  const [newField, setNewField] = useState({ name: '', field_type: 'text', field_options_raw: '' })
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState(null)
 
@@ -97,10 +97,16 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
 
   async function addField() {
     if (!newField.name.trim()) { setError('Field name is required'); return }
+    if (newField.field_type === 'select' && !newField.field_options_raw.trim()) {
+      setError('Select fields require at least one option'); return
+    }
     setSaving(true); setError(null)
     try {
-      await api.createCustomField({ ...newField, artist_id: artistId }, adminToken)
-      setNewField({ name: '', field_type: 'text' })
+      const field_options = newField.field_type === 'select'
+        ? newField.field_options_raw.split(',').map(s => s.trim()).filter(Boolean)
+        : null
+      await api.createCustomField({ name: newField.name, field_type: newField.field_type, field_options, artist_id: artistId }, adminToken)
+      setNewField({ name: '', field_type: 'text', field_options_raw: '' })
       onSaved()
     } catch (e) { setError(e.message) }
     finally { setSaving(false) }
@@ -205,13 +211,20 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
           </p>
 
           {customFields.map(f => (
-            <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ flex: 1, fontSize: 14 }}>{f.name}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: 4 }}>
-                {f.field_type}
-              </span>
-              <button className="btn btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}
-                onClick={() => deleteField(f.id)}>Remove</button>
+            <div key={f.id} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ flex: 1, fontSize: 14 }}>{f.name}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: 4 }}>
+                  {f.field_type}
+                </span>
+                <button className="btn btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => deleteField(f.id)}>Remove</button>
+              </div>
+              {f.field_type === 'select' && f.field_options?.length > 0 && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3, paddingLeft: 2 }}>
+                  Options: {f.field_options.join(' · ')}
+                </div>
+              )}
             </div>
           ))}
 
@@ -232,6 +245,7 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
                 <option value="number">Number</option>
                 <option value="date">Date</option>
                 <option value="url">URL</option>
+                <option value="select">Select</option>
               </select>
             </div>
             <button className="btn btn-primary" disabled={saving} onClick={addField}
@@ -239,6 +253,16 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
               Add
             </button>
           </div>
+          {newField.field_type === 'select' && (
+            <div style={{ marginTop: 8 }}>
+              <label>Options <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}>(comma-separated)</span></label>
+              <input
+                value={newField.field_options_raw}
+                onChange={e => setNewField(f => ({ ...f, field_options_raw: e.target.value }))}
+                placeholder="e.g. paintings, drawings, digital, sculpture"
+              />
+            </div>
+          )}
         </div>
 
         <div className="modal-footer">

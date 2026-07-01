@@ -86,6 +86,7 @@ export default function App() {
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const [filterSubject, setFilterSubject]     = useState(null)  // subject/style chip
   const [filterMedium, setFilterMedium]       = useState(null)  // medium chip (AND with filterSubject)
+  const [filterCustom, setFilterCustom]       = useState(null)  // { fieldId, value } for select-type custom fields
   const [search, setSearch]                   = useState('')
   const [searchScope, setSearchScope]         = useState('all')
 
@@ -286,6 +287,11 @@ export default function App() {
   if (filterMedium) {
     displayed = displayed.filter(aw => (aw.genres || []).some(g => g.id === filterMedium))
   }
+  if (filterCustom) {
+    displayed = displayed.filter(aw =>
+      (aw.custom_fields || []).some(f => f.field_id === filterCustom.fieldId && f.value === filterCustom.value)
+    )
+  }
 
   // Only show filter buttons for genres actually used by current artworks
   const usedGenreIds = new Set(artworks.flatMap(aw => (aw.genres || []).map(g => g.id)))
@@ -429,6 +435,42 @@ export default function App() {
           </div>
         )}
 
+        {/* Row 3: Select-type custom field chips — one row per select field that has data */}
+        {customFields
+          .filter(f => f.field_type === 'select' && f.field_options?.length > 0)
+          .filter(f => artworks.some(aw => (aw.custom_fields || []).some(cf => cf.field_id === f.id && cf.value)))
+          .map(f => (
+            <div key={f.id} className="filter-bar-row">
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', alignSelf: 'center', marginRight: 4, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>
+                {f.name}:
+              </span>
+              <button
+                className={`filter-chip ${!filterCustom || filterCustom.fieldId !== f.id ? 'active' : ''}`}
+                style={!filterCustom || filterCustom.fieldId !== f.id ? { background: '#1a1a1a', borderColor: '#1a1a1a' } : {}}
+                onClick={() => setFilterCustom(null)}
+              >
+                All
+              </button>
+              {f.field_options
+                .filter(opt => artworks.some(aw => (aw.custom_fields || []).some(cf => cf.field_id === f.id && cf.value === opt)))
+                .map(opt => {
+                  const isActive = filterCustom?.fieldId === f.id && filterCustom?.value === opt
+                  return (
+                    <button
+                      key={opt}
+                      className={`filter-chip ${isActive ? 'active' : ''}`}
+                      style={isActive ? { background: '#6b7280', borderColor: '#6b7280' } : {}}
+                      onClick={() => setFilterCustom(isActive ? null : { fieldId: f.id, value: opt })}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })
+              }
+            </div>
+          ))
+        }
+
       </div>
 
       {/* ── Main Grid ── */}
@@ -442,9 +484,9 @@ export default function App() {
           <div className="artwork-grid">
             {displayed.length === 0 ? (
               <div className="empty-state">
-                <h3>{search || filterSubject || filterMedium ? 'No artworks found' : 'No artworks yet'}</h3>
-                <p>{search || filterSubject || filterMedium ? 'Try a different search or filter.' : isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
-                {!search && !filterSubject && !filterMedium && isAdmin && (
+                <h3>{search || filterSubject || filterMedium || filterCustom ? 'No artworks found' : 'No artworks yet'}</h3>
+                <p>{search || filterSubject || filterMedium || filterCustom ? 'Try a different search or filter.' : isAdmin ? 'Click "Add Artwork" to add your first piece.' : 'Come back soon.'}</p>
+                {!search && !filterSubject && !filterMedium && !filterCustom && isAdmin && (
                   <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
                     + Add Artwork
                   </button>

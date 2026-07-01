@@ -29,12 +29,16 @@ export async function onRequestGet({ env, params, data }) {
 
     // Custom field values
     const customVals = await env.DB.prepare(`
-      SELECT cfd.id AS field_id, cfd.name AS field_name, cfd.field_type, acv.value
+      SELECT cfd.id AS field_id, cfd.name AS field_name, cfd.field_type, cfd.field_options, acv.value
       FROM custom_field_definitions cfd
       LEFT JOIN artwork_custom_values acv ON acv.field_id = cfd.id AND acv.artwork_id = ?
       WHERE cfd.artist_id = ?
       ORDER BY cfd.display_order, cfd.id
     `).bind(id, artwork.artist_id).all()
+    const customFields = customVals.results.map(f => ({
+      ...f,
+      field_options: f.field_options ? JSON.parse(f.field_options) : null,
+    }))
 
     // Prints
     const prints = await env.DB.prepare(
@@ -50,7 +54,7 @@ export async function onRequestGet({ env, params, data }) {
       ...artwork,
       genres: genresRes.results,
       showings: showings.results,
-      custom_fields: customVals.results,
+      custom_fields: customFields,
       prints: prints.results,
       extra_images: extraImages.results,
     })

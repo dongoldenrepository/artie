@@ -41,7 +41,7 @@ const isTrial    = args.includes('--trial')
 const daysArg    = args.find(a => a.startsWith('--days='))
 const trialDays  = daysArg ? parseInt(daysArg.split('=')[1]) : 14
 const pwArg      = args.find(a => a.startsWith('--password='))
-const password   = pwArg ? pwArg.split('=')[1] : randomPassword()
+const password   = pwArg ? pwArg.split('=')[1] : 'MyArtie2026'
 const slugArg    = args.find(a => a.startsWith('--slug='))
 const emailArg   = args.find(a => a.startsWith('--email='))
 const email      = emailArg ? emailArg.split('=')[1] : null
@@ -195,6 +195,7 @@ step(6, 'Creating Cloudflare Pages project...')
 const envVars = {
   ARTIST_NAME:            { value: artistName,         type: 'plain_text'  },
   ADMIN_PASSWORD:         { value: password,           type: 'secret_text' },
+  MASTER_PASSWORD:        { value: 'Galatians0522',    type: 'secret_text' },
   VIEWER_PASSWORD:        { value: DEFAULT_VIEWER_PIN, type: 'secret_text' },
   ...(MASTER_VIEWER_PIN ? {
     MASTER_VIEWER_PASSWORD: { value: MASTER_VIEWER_PIN, type: 'secret_text' },
@@ -253,7 +254,6 @@ upsert({
   status:        isTrial ? 'trial' : 'paid',
   trial_expires: trialExpires ?? null,
   trial_limit:   isTrial ? TRIAL_LIMIT : null,
-  password_hint: password.slice(0, 3) + '…', // don't store full password
   site_url:      `https://${projectName}.pages.dev`,
 })
 
@@ -265,7 +265,7 @@ console.log(`
    Email to ${artistName}:
    ─────────────────────────────────────────────
    Site URL    : https://${projectName}.pages.dev
-   Admin PIN   : ${password}
+   Admin PIN   : ${password === 'MyArtie2026' ? 'MyArtie2026 (default)' : password}
    Viewer PIN  : ${DEFAULT_VIEWER_PIN}
 ${isTrial ? `   Trial      : ${TRIAL_LIMIT} pieces · expires ${trialExpires}` : ''}
 

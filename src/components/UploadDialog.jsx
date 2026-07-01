@@ -193,11 +193,23 @@ export default function UploadDialog({ genres = [], customFields, artistId = 1, 
               {customFields.map(f => (
                 <div key={f.id} style={{ marginBottom: 8 }}>
                   <label>{f.name}</label>
-                  <input
-                    type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
-                    value={form.custom_values[f.id] || ''}
-                    onChange={e => setField('custom_values', { ...form.custom_values, [f.id]: e.target.value })}
-                  />
+                  {f.field_type === 'select' && f.field_options?.length > 0
+                    ? (
+                      <select
+                        value={form.custom_values[f.id] || ''}
+                        onChange={e => setField('custom_values', { ...form.custom_values, [f.id]: e.target.value })}
+                      >
+                        <option value="">— select —</option>
+                        {f.field_options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
+                        value={form.custom_values[f.id] || ''}
+                        onChange={e => setField('custom_values', { ...form.custom_values, [f.id]: e.target.value })}
+                      />
+                    )
+                  }
                 </div>
               ))}
             </div>
