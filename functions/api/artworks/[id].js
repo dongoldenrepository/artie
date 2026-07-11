@@ -73,7 +73,7 @@ export async function onRequestPut({ env, request, params, data }) {
     const {
       title, medium, size, price, date_created,
       current_location, description, image_key, is_available,
-      category_id,
+      category_id, background_color,
       genres, custom_values,
       showings
     } = await request.json()
@@ -81,7 +81,7 @@ export async function onRequestPut({ env, request, params, data }) {
     // Build dynamic UPDATE
     const fields = []
     const vals = []
-    const map = { title, medium, size, price, date_created, current_location, description, image_key, is_available, category_id }
+    const map = { title, medium, size, price, date_created, current_location, description, image_key, is_available, category_id, background_color }
     for (const [k, v] of Object.entries(map)) {
       if (v !== undefined) { fields.push(`${k} = ?`); vals.push(v ?? null) }
     }

@@ -146,7 +146,11 @@ export const api = {
     body: JSON.stringify({ order }),
   }),
 
-  // Image upload — resizes to 2000px long side if needed before uploading
+  // Image upload — resizes to 2000px long side if needed before uploading.
+  // Alpha-aware: PNG/WebP/GIF sources are only re-encoded as JPEG if they
+  // turn out to be fully opaque. If any pixel is transparent, we re-encode
+  // as PNG instead — flattening a transparent image to JPEG silently bakes
+  // a solid black background into the file, permanently.
   uploadImage: async (file, token) => {
     const MAX_LONG_SIDE = 2000
     const JPEG_QUALITY = 0.90
@@ -166,12 +170,33 @@ export const api = {
         const canvas = document.createElement('canvas')
         canvas.width  = Math.round(w * scale)
         canvas.height = Math.round(h * scale)
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-        canvas.toBlob(
-          (blob) => resolve(new File([blob], file.name, { type: 'image/jpeg' })),
-          'image/jpeg',
-          JPEG_QUALITY
-        )
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+        // JPEG sources never have an alpha channel, so they're always safe
+        // to re-encode as JPEG. PNG/WebP/GIF *might* be transparent — check
+        // actual pixel data before deciding.
+        const canHaveAlpha = file.type !== 'image/jpeg' && file.type !== 'image/jpg'
+        let isTransparent = false
+        if (canHaveAlpha) {
+          const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          for (let i = 3; i < data.length; i += 4) {
+            if (data[i] < 255) { isTransparent = true; break }
+          }
+        }
+
+        if (isTransparent) {
+          canvas.toBlob(
+            (blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' })),
+            'image/png'
+          )
+        } else {
+          canvas.toBlob(
+            (blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+            'image/jpeg',
+            JPEG_QUALITY
+          )
+        }
       }
       img.src = url
     })

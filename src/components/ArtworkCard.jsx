@@ -39,7 +39,14 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, dragg
     >
       <div className="card-image-wrap">
         {src
-          ? <img src={src} alt={artwork.title} loading="lazy" />
+          ? (
+            <div
+              className={`img-backdrop${artwork.background_color ? '' : ' checkerboard-bg'}`}
+              style={artwork.background_color ? { backgroundColor: artwork.background_color } : undefined}
+            >
+              <img src={src} alt={artwork.title} loading="lazy" />
+            </div>
+          )
           : <div className="card-placeholder">🖼</div>
         }
       </div>

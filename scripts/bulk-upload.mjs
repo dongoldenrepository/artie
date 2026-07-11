@@ -26,13 +26,21 @@
  *     --token    "MyArtie2026" \
  *     [--mode    per-image|per-folder]  (default: per-image) \
  *     [--tags    "Illustration,Children's"]  forced genres on every artwork \
- *     [--max-px  2000]   resize longest side to this many pixels before upload \
+ *     [--max-px  2000]   resize longest side to this many pixels (default: 2000 — always on) \
+ *     [--no-resize]      disable resizing, upload originals as-is \
  *     [--skip-generic]   skip files with auto-generated names (UUIDs, img_XXXX, frame_N, etc.) \
  *                        and write a skipped-<folder>-<date>.md report \
  *     [--url     "https://artie-taylor-mershon.pages.dev"] \
  *     [--dry-run]
  *
- * Requires: npm install --save-dev sharp   (for --max-px resizing)
+ * Resizing is alpha-aware: images with a transparent background (PNG/WebP/GIF
+ * logos, cutouts, etc.) are resized but re-encoded as PNG so transparency is
+ * preserved. Only images with no alpha channel (ordinary photos/scans) are
+ * re-encoded as JPEG. This matters because naively resizing everything to
+ * JPEG silently flattens transparent pixels to a solid (usually black)
+ * background — the resize step must never do that.
+ *
+ * Requires: npm install --save-dev sharp   (for resizing; on by default)
  */
 
 import fs   from 'fs'
@@ -63,7 +71,9 @@ const token    = getArg('--token')
 const baseUrl  = getArg('--url')    || 'https://artie-taylor-mershon.pages.dev'
 const mode     = getArg('--mode')   || 'per-image'   // 'per-image' | 'per-folder'
 const tagsArg  = getArg('--tags')   || ''            // comma-separated genre names forced onto every artwork
-const maxPx       = getArg('--max-px') ? Number(getArg('--max-px')) : null  // resize longest side
+const DEFAULT_MAX_PX = 2000
+const noResize    = args.includes('--no-resize')
+const maxPx       = noResize ? null : (getArg('--max-px') ? Number(getArg('--max-px')) : DEFAULT_MAX_PX)  // resize longest side; on by default
 const onlyDir     = getArg('--only')  || ''   // process only this subfolder name (case-insensitive)
 const skipGeneric = args.includes('--skip-generic')  // skip auto-named files and write report
 const dryRun      = args.includes('--dry-run')
@@ -300,22 +310,45 @@ async function uploadImage(filePath) {
   let buf = fs.readFileSync(filePath)
   const ext = path.extname(filePath).toLowerCase()
 
-  // Resize if --max-px is set
-  let mimeType = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
-                   '.heic': 'image/heic', '.heif': 'image/heif' }[ext] || 'image/jpeg'
+  const EXT_MIME = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
+                     '.heic': 'image/heic', '.heif': 'image/heif' }
+  let mimeType = EXT_MIME[ext] || 'image/jpeg'
+  let outExt   = (ext || '.jpg').slice(1)  // extension actually written to R2, kept in sync with mimeType below
+
   if (maxPx) {
-    const sh = await loadSharp()
-    buf = await sh(buf)
-      .rotate()                          // auto-orient from EXIF
-      .resize({ width: maxPx, height: maxPx, fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })            // always output JPEG for photos
-      .toBuffer()
-    mimeType = 'image/jpeg'
+    const sh  = await loadSharp()
+    const img = sh(buf).rotate()   // auto-orient from EXIF; doesn't consume the pipeline
+    let hasAlpha = false
+    try {
+      hasAlpha = !!(await img.metadata()).hasAlpha
+    } catch {
+      // Unreadable metadata (corrupt/unsupported file) — fall through and
+      // treat as opaque rather than risk crashing the whole import run.
+    }
+
+    if (hasAlpha) {
+      // Never flatten transparent pixels to JPEG — that bakes a solid
+      // (usually black) background into the file permanently. Resize but
+      // keep the alpha channel by re-encoding as PNG.
+      buf = await img
+        .resize({ width: maxPx, height: maxPx, fit: 'inside', withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
+        .toBuffer()
+      mimeType = 'image/png'
+      outExt   = 'png'
+    } else {
+      buf = await img
+        .resize({ width: maxPx, height: maxPx, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toBuffer()
+      mimeType = 'image/jpeg'
+      outExt   = 'jpg'
+    }
   }
 
   const blob = new Blob([buf], { type: mimeType })
   const fd   = new FormData()
-  fd.append('image', blob, normalizeFilename(path.basename(filePath)).replace(/\.[^.]+$/, '.jpg'))
+  fd.append('image', blob, normalizeFilename(path.basename(filePath)).replace(/\.[^.]+$/, `.${outExt}`))
 
   const res = await fetch(`${baseUrl}/api/images/upload`, {
     method:  'POST',

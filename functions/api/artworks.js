@@ -14,7 +14,7 @@ export async function onRequestGet({ env, request, data }) {
         a.id, a.artist_id, a.title, a.medium, a.size, a.price,
         a.date_created, a.current_location, a.description,
         a.image_key, a.is_available, a.artwork_type, a.sort_order, a.created_at, a.updated_at,
-        a.category_id,
+        a.category_id, a.background_color,
         ar.name AS artist_name, ar.artist_type,
         c.name AS category_name, c.color AS category_color, c.is_printable,
         GROUP_CONCAT(g.id   || '~~' || g.name || '~~' || g.color || '~~' || COALESCE(g.tag_type,'subject'), '||') AS genres_raw,
@@ -117,6 +117,7 @@ export async function onRequestPost({ env, request, data }) {
       is_available = 1,
       artwork_type = 'artwork',
       category_id = null,
+      background_color = null,
       genres = [], custom_values = {}
     } = await request.json()
 
@@ -126,14 +127,14 @@ export async function onRequestPost({ env, request, data }) {
 
     const ins = await env.DB.prepare(`
       INSERT INTO artworks
-        (artist_id, title, medium, size, price, date_created, current_location, description, image_key, is_available, artwork_type, category_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        (artist_id, title, medium, size, price, date_created, current_location, description, image_key, is_available, artwork_type, category_id, background_color)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
       artistId, title, medium || null, size || null,
       price ?? null, date_created || null,
       current_location || null, description || null,
       image_key || null, is_available, artwork_type,
-      category_id || null
+      category_id || null, background_color || null
     ).run()
 
     const artworkId = ins.meta.last_row_id

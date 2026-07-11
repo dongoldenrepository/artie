@@ -118,7 +118,7 @@ if (imageKeys.length > 0) {
   // Use wrangler CLI — simpler than S3-compatible API for object deletion
   const configFile = path.join(ROOT, `wrangler-${slug}.toml`)
   const hasConfig  = fs.existsSync(configFile)
-  const configArg  = hasConfig ? `--config="${configFile}"` : `--config="${path.join(ROOT, 'wrangler-don.toml')}"`
+  const configArg  = hasConfig ? `--config="${configFile}"` : `--config="${path.join(ROOT, 'wrangler-don-golden.toml')}"`
 
   let deleted = 0
   for (const key of imageKeys) {

@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { imgSrc, api } from '../utils/api'
 import MetadataPanel from './MetadataPanel'
+import BackgroundColorPicker from './BackgroundColorPicker'
+
+// File types that can carry an alpha channel — only these are offered the
+// background-color picker, per the "only if the format accommodates
+// transparency" requirement.
+const ALPHA_EXTS = new Set(['png', 'webp', 'gif'])
+function keySupportsAlpha(key) {
+  const ext = key?.split('.').pop()?.toLowerCase()
+  return ALPHA_EXTS.has(ext)
+}
 
 export default function ArtworkDetail({
   artwork, allArtworks, existingTitles = [], isAdmin, adminToken,
@@ -13,11 +23,15 @@ export default function ArtworkDetail({
   const [panelDirty, setPanelDirty]     = useState(false)
   const [showDirtyDialog, setShowDirtyDialog] = useState(false)
   const [saveRequested, setSaveRequested]     = useState(0)
+  const [bgOverrides, setBgOverrides]   = useState({}) // { [imageId]: colorOrNull } — optimistic local edits
+  const [bgPickerOpen, setBgPickerOpen] = useState(false)
   const pendingCloseRef = useRef(false)
 
   // Fetch extra images directly from API whenever artwork changes
   useEffect(() => {
     setActiveIdx(0)
+    setBgOverrides({})
+    setBgPickerOpen(false)
     if (!artwork?.id) return
     api.getArtworkImages(artwork.id)
       .then(r => setExtraImages(r.images || []))
@@ -26,9 +40,46 @@ export default function ArtworkDetail({
 
   // Build image list: main image first, then extra images
   const allImages = [
-    ...(artwork?.image_key ? [{ key: artwork.image_key, id: 'main' }] : []),
-    ...extraImages.map(i => ({ key: i.image_key, id: i.id, caption: i.caption }))
+    ...(artwork?.image_key ? [{
+      key: artwork.image_key, id: 'main',
+      background_color: 'main' in bgOverrides ? bgOverrides.main : artwork.background_color,
+    }] : []),
+    ...extraImages.map(i => ({
+      key: i.image_key, id: i.id, caption: i.caption,
+      background_color: i.id in bgOverrides ? bgOverrides[i.id] : i.background_color,
+    }))
   ]
+
+  const activeImg      = allImages[activeIdx]
+  const activeBgColor  = activeImg?.background_color ?? null
+  const activeCanHaveAlpha = keySupportsAlpha(activeImg?.key)
+
+  // Colors already used on other pieces, so the artist isn't hand-matching
+  const usedSwatches = [...new Set((allArtworks || []).map(a => a.background_color).filter(Boolean))]
+
+  async function handleBgColorChange(color) {
+    const img = allImages[activeIdx]
+    if (!img) return
+    const hadPrev = img.id in bgOverrides
+    const prev = bgOverrides[img.id]
+    setBgOverrides(o => ({ ...o, [img.id]: color }))
+    setBgPickerOpen(false)
+    try {
+      if (img.id === 'main') {
+        await api.updateArtwork(artwork.id, { background_color: color }, adminToken)
+      } else {
+        await api.updateArtworkImage(img.id, { background_color: color }, adminToken)
+      }
+    } catch (e) {
+      setBgOverrides(o => {
+        const n = { ...o }
+        if (hadPrev) n[img.id] = prev
+        else delete n[img.id]
+        return n
+      })
+      alert('Could not save background color: ' + e.message)
+    }
+  }
 
   // Preload adjacent images so navigation feels instant
   useEffect(() => {
@@ -60,6 +111,9 @@ export default function ArtworkDetail({
 
   // Reset panel and editing state when artwork changes
   useEffect(() => { setPanelOpen(false); setEditing(false) }, [artwork?.id])
+
+  // Close the background-color popover when switching images
+  useEffect(() => { setBgPickerOpen(false) }, [activeIdx])
 
   function navigate(dir) {
     // First cycle through images within this artwork
@@ -147,7 +201,37 @@ export default function ArtworkDetail({
         style={{ flexDirection: 'column', gap: 0 }}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, width: '100%' }}>
           {activeSrc
-            ? <img className="detail-image" src={activeSrc} alt={artwork.title} />
+            ? (
+              <div
+                className={`detail-image-backdrop${activeBgColor ? '' : ' checkerboard-bg'}`}
+                style={activeBgColor ? { backgroundColor: activeBgColor } : undefined}
+                onContextMenu={e => {
+                  if (!isAdmin || !activeCanHaveAlpha) return
+                  e.preventDefault()
+                  setBgPickerOpen(o => !o)
+                }}
+              >
+                <img className="detail-image" src={activeSrc} alt={artwork.title} />
+
+                {isAdmin && activeCanHaveAlpha && (
+                  <button
+                    className="bg-color-trigger"
+                    style={{ background: activeBgColor || 'conic-gradient(#fff 0 25%, #ccc 0 50%, #fff 0 75%, #ccc 0)' }}
+                    title="Set background color (or right-click the image)"
+                    onClick={e => { e.stopPropagation(); setBgPickerOpen(o => !o) }}
+                  />
+                )}
+
+                {bgPickerOpen && (
+                  <BackgroundColorPicker
+                    value={activeBgColor}
+                    swatches={usedSwatches}
+                    onChange={handleBgColorChange}
+                    onClose={() => setBgPickerOpen(false)}
+                  />
+                )}
+              </div>
+            )
             : <div style={{ color: '#888', fontSize: 72 }}>🖼</div>
           }
         </div>
@@ -162,7 +246,8 @@ export default function ArtworkDetail({
                 width: 52, height: 40, padding: 0, border: 'none', borderRadius: 4,
                 outline: idx === activeIdx ? '2px solid #f0ece4' : '2px solid transparent',
                 cursor: 'pointer', overflow: 'hidden', flexShrink: 0, opacity: idx === activeIdx ? 1 : 0.6,
-                transition: 'opacity 0.15s, outline 0.15s'
+                transition: 'opacity 0.15s, outline 0.15s',
+                background: img.background_color || '#fff'
               }}>
                 <img src={imgSrc(img.key)} alt={img.caption || `View ${idx + 1}`}
                   loading="lazy"

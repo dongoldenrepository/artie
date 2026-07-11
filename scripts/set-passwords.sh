@@ -19,15 +19,15 @@ echo ""
 echo "=== Updating admin_password in D1 databases ==="
 
 echo "Don..."
-npx wrangler d1 execute artie-don-golden-db --config wrangler-don.toml \
+npx wrangler d1 execute artie-don-golden-db --config wrangler-don-golden.toml \
   --command="UPDATE artists SET admin_password = '${HASH}' WHERE id = 1;" --remote
 
 echo "Kathy..."
-npx wrangler d1 execute artie-kathy-golden-db --config wrangler-kathy.toml \
+npx wrangler d1 execute artie-kathy-golden-db --config wrangler-kathy-golden.toml \
   --command="UPDATE artists SET admin_password = '${HASH}' WHERE id = 1;" --remote
 
 echo "Mary..."
-npx wrangler d1 execute artie-mary-lynch-db --config wrangler-mary.toml \
+npx wrangler d1 execute artie-mary-lynch-db --config wrangler-mary-lynch.toml \
   --command="UPDATE artists SET admin_password = '${HASH}' WHERE id = 1;" --remote
 
 echo "Hannah..."
