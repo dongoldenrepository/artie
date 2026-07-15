@@ -4,7 +4,7 @@ import { useRef, useEffect } from 'react'
 // picker at all — merged with colors already used elsewhere in the catalog.
 const DEFAULT_SWATCHES = ['#ffffff', '#000000', '#f5f0e6', '#1a1a1a', '#e8e4dc']
 
-export default function BackgroundColorPicker({ value, swatches = [], onChange, onClose }) {
+export default function BackgroundColorPicker({ value, swatches = [], onChange, onClose, style }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function BackgroundColorPicker({ value, swatches = [], onChange, 
   const options = [...new Set([...swatches, ...DEFAULT_SWATCHES])]
 
   return (
-    <div ref={ref} className="bg-color-popover" onClick={e => e.stopPropagation()}>
+    <div ref={ref} className="bg-color-popover" style={style} onClick={e => e.stopPropagation()}>
       <div className="bg-color-popover-label">Background</div>
 
       <button

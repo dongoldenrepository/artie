@@ -575,14 +575,13 @@ export default function App() {
               🎨 Set Background Color
             </button>
             {showBulkColorPicker && (
-              <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 8 }}>
-                <BackgroundColorPicker
-                  value={null}
-                  swatches={[...new Set(artworks.map(a => a.background_color).filter(Boolean))]}
-                  onChange={handleBulkApplyColor}
-                  onClose={() => setShowBulkColorPicker(false)}
-                />
-              </div>
+              <BackgroundColorPicker
+                value={null}
+                swatches={[...new Set(artworks.map(a => a.background_color).filter(Boolean))]}
+                onChange={handleBulkApplyColor}
+                onClose={() => setShowBulkColorPicker(false)}
+                style={{ position: 'absolute', top: 'auto', bottom: '100%', right: 0, marginBottom: 8 }}
+              />
             )}
           </div>
           <button className="btn btn-ghost" onClick={toggleSelectMode}>Cancel</button>
