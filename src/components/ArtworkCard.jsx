@@ -1,6 +1,9 @@
 import { imgSrc } from '../utils/api'
 
-export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, isDragging }) {
+export default function ArtworkCard({
+  artwork, isAdmin, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, isDragging,
+  selectMode, selected, showLocation,
+}) {
   function handleDelete(e) {
     e.stopPropagation()
     if (window.confirm(`Delete "${artwork.title}"? This cannot be undone.`)) {
@@ -30,13 +33,19 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, dragg
 
   return (
     <div
-      className={`artwork-card${isDragging ? ' drag-source' : ''}`}
+      className={`artwork-card${isDragging ? ' drag-source' : ''}${selected ? ' selected' : ''}`}
       onClick={() => onClick(artwork)}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
+      {selectMode && (
+        <div className={`card-select-checkbox${selected ? ' checked' : ''}`}>
+          {selected ? '✓' : ''}
+        </div>
+      )}
+
       <div className="card-image-wrap">
         {src
           ? (
@@ -51,7 +60,7 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, dragg
         }
       </div>
 
-      {isAdmin && (
+      {isAdmin && !selectMode && (
         <div className="card-admin-actions" onClick={e => e.stopPropagation()}>
           <button className="btn-icon" title="Delete" onClick={handleDelete}>🗑</button>
         </div>
@@ -65,6 +74,9 @@ export default function ArtworkCard({ artwork, isAdmin, onClick, onDelete, dragg
         {priceStr && <div className="card-price">{priceStr}</div>}
         {printLabel && (
           <div className="card-print-label">{printLabel}</div>
+        )}
+        {showLocation && artwork.current_location && (
+          <div className="card-location">📍 {artwork.current_location}</div>
         )}
         {badgeItems.length > 0 && (
           <div className="card-badges">

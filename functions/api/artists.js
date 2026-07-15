@@ -45,11 +45,25 @@ export async function onRequestGet({ env, data }) {
 export async function onRequestPut({ request, env, data }) {
   if (!data.isAdmin) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    const { default_medium, artist_type } = await request.json()
+    const { default_medium, artist_type, show_current_location } = await request.json()
     const artistId = data.artistId
-    await env.DB.prepare(
-      'UPDATE artists SET default_medium=?, artist_type=COALESCE(?,artist_type) WHERE id=?'
-    ).bind(default_medium ?? '', artist_type ?? null, artistId).run()
+
+    // Build dynamic UPDATE so partial settings updates (e.g. just the
+    // show_current_location toggle) don't clobber other fields.
+    const fields = []
+    const vals = []
+    if (default_medium !== undefined) { fields.push('default_medium = ?'); vals.push(default_medium ?? '') }
+    if (artist_type !== undefined)    { fields.push('artist_type = ?');    vals.push(artist_type ?? null) }
+    if (show_current_location !== undefined) {
+      fields.push('show_current_location = ?')
+      vals.push(show_current_location ? 1 : 0)
+    }
+
+    if (fields.length) {
+      vals.push(artistId)
+      await env.DB.prepare(`UPDATE artists SET ${fields.join(', ')} WHERE id=?`).bind(...vals).run()
+    }
+
     return Response.json({ ok: true })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })

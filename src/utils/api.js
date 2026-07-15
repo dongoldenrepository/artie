@@ -146,6 +146,13 @@ export const api = {
     body: JSON.stringify({ order }),
   }),
 
+  // Bulk-apply a background color to many artworks at once (thumbnail multiselect)
+  bulkSetBackgroundColor: (ids, color, token) => req('/artworks/background-color', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+    body: JSON.stringify({ ids, color }),
+  }),
+
   // Image upload — resizes to 2000px long side if needed before uploading.
   // Alpha-aware: PNG/WebP/GIF sources are only re-encoded as JPEG if they
   // turn out to be fully opaque. If any pixel is transparent, we re-encode

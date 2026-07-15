@@ -4,6 +4,7 @@ import ArtworkCard from './components/ArtworkCard'
 import ArtworkDetail from './components/ArtworkDetail'
 import UploadDialog from './components/UploadDialog'
 import CategoryManager from './components/CategoryManager'
+import BackgroundColorPicker from './components/BackgroundColorPicker'
 import AdminLogin from './components/AdminLogin'
 import SetPasswordModal from './components/SetPasswordModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
@@ -21,11 +22,14 @@ function useToast() {
   return { toast, show }
 }
 
-function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword, onChangeViewerPin, trialLocked }) {
+function AdminBar({ onAddArtwork, onAddPhoto, onCategories, onChangePassword, onChangeViewerPin, trialLocked, selectMode, onToggleSelectMode }) {
   return (
     <div className="admin-bar">
       <button className="btn btn-primary" onClick={onAddArtwork} disabled={trialLocked}>+ Add Artwork</button>
       <button className="btn btn-primary" onClick={onAddPhoto}   disabled={trialLocked}>📷 Add Photo</button>
+      <button className={`btn ${selectMode ? 'btn-primary' : 'btn-ghost'}`} onClick={onToggleSelectMode}>
+        {selectMode ? '✕ Cancel Select' : '☑ Select Multiple'}
+      </button>
       <button className="btn btn-ghost"   onClick={onCategories}>⚙ Catalog Settings</button>
       <button className="btn btn-ghost"   onClick={onChangePassword}>🔑 Change Password</button>
       <button className="btn btn-ghost"   onClick={onChangeViewerPin}>🔢 Change Viewer PIN</button>
@@ -103,6 +107,12 @@ export default function App() {
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showChangeViewerPin, setShowChangeViewerPin] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+
+  // ── Bulk background-color multiselect ──────────────────────────────────────
+  const [selectMode, setSelectMode]           = useState(false)
+  const [selectedIds, setSelectedIds]         = useState(() => new Set())
+  const [showBulkColorPicker, setShowBulkColorPicker] = useState(false)
+  const [applyingBulkColor, setApplyingBulkColor]     = useState(false)
 
   const { toast, show: showToast } = useToast()
 
@@ -252,6 +262,39 @@ export default function App() {
     localStorage.setItem('artie-sort', mode)
   }
 
+  // ── Bulk background-color multiselect ──────────────────────────────────────
+  function toggleSelectMode() {
+    setSelectMode(m => !m)
+    setSelectedIds(new Set())
+    setShowBulkColorPicker(false)
+  }
+
+  function toggleSelectArtwork(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function handleBulkApplyColor(color) {
+    if (!selectedIds.size) return
+    setApplyingBulkColor(true)
+    try {
+      await api.bulkSetBackgroundColor([...selectedIds], color, adminToken)
+      setShowBulkColorPicker(false)
+      setSelectMode(false)
+      setSelectedIds(new Set())
+      await loadAll()
+      showToast(`Background color applied to ${selectedIds.size} piece${selectedIds.size === 1 ? '' : 's'}!`)
+    } catch (e) {
+      showToast('Failed to apply background color: ' + e.message, 'error')
+    } finally {
+      setApplyingBulkColor(false)
+    }
+  }
+
   function handleDragStart(e, id) {
     setDraggedId(id)
     e.dataTransfer.effectAllowed = 'move'
@@ -362,6 +405,8 @@ export default function App() {
           onChangePassword={() => setShowChangePassword(true)}
           onChangeViewerPin={() => setShowChangeViewerPin(true)}
           trialLocked={!!(artists[0]?.trial_expired || artists[0]?.trial_limit_hit)}
+          selectMode={selectMode}
+          onToggleSelectMode={toggleSelectMode}
         />
       )}
 
@@ -498,19 +543,51 @@ export default function App() {
                   key={aw.id}
                   artwork={aw}
                   isAdmin={isAdmin}
-                  onClick={openArtwork}
+                  onClick={selectMode ? () => toggleSelectArtwork(aw.id) : openArtwork}
                   onDelete={handleDeleteArtwork}
-                  draggable={isAdmin && sortMode === 'manual'}
+                  draggable={isAdmin && sortMode === 'manual' && !selectMode}
                   onDragStart={e => handleDragStart(e, aw.id)}
                   onDragOver={e => e.preventDefault()}
                   onDrop={e => handleDrop(e, aw.id)}
                   isDragging={draggedId === aw.id}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(aw.id)}
+                  showLocation={!!artists[0]?.show_current_location}
                 />
               ))
             )}
           </div>
         )}
       </main>
+
+      {/* ── Bulk select action bar ── */}
+      {selectMode && (
+        <div className="bulk-select-bar">
+          <span className="bulk-select-count">
+            {selectedIds.size} selected
+          </span>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-primary"
+              disabled={!selectedIds.size || applyingBulkColor}
+              onClick={() => setShowBulkColorPicker(o => !o)}
+            >
+              🎨 Set Background Color
+            </button>
+            {showBulkColorPicker && (
+              <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 8 }}>
+                <BackgroundColorPicker
+                  value={null}
+                  swatches={[...new Set(artworks.map(a => a.background_color).filter(Boolean))]}
+                  onChange={handleBulkApplyColor}
+                  onClose={() => setShowBulkColorPicker(false)}
+                />
+              </div>
+            )}
+          </div>
+          <button className="btn btn-ghost" onClick={toggleSelectMode}>Cancel</button>
+        </div>
+      )}
 
       {/* ── Detail Overlay ── */}
       {selectedArtwork && (
@@ -546,6 +623,7 @@ export default function App() {
         <CategoryManager
           customFields={customFields}
           artistId={artists[0]?.id || 1}
+          artist={artists[0]}
           adminToken={adminToken}
           onClose={() => setShowCategories(false)}
           onSaved={loadAll}

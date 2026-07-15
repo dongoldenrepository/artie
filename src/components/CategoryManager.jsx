@@ -48,9 +48,32 @@ function ColorPicker({ value, onChange }) {
   )
 }
 
-export default function CategoryManager({ customFields = [], artistId, adminToken, onClose, onSaved }) {
+export default function CategoryManager({ customFields = [], artistId, artist, adminToken, onClose, onSaved }) {
   // Load all genres including disabled ones for management
   const [allGenres, setAllGenres] = useState([])
+
+  // ── Display options (thumbnail page) ────────────────────────────────────
+  const [showLocation, setShowLocation] = useState(!!artist?.show_current_location)
+  const [savingDisplay, setSavingDisplay] = useState(false)
+
+  useEffect(() => {
+    setShowLocation(!!artist?.show_current_location)
+  }, [artist?.show_current_location])
+
+  async function toggleShowLocation() {
+    const next = !showLocation
+    setShowLocation(next) // optimistic
+    setSavingDisplay(true)
+    try {
+      await api.updateArtist({ show_current_location: next }, adminToken)
+      onSaved()
+    } catch (e) {
+      setShowLocation(!next)
+      setError(e.message)
+    } finally {
+      setSavingDisplay(false)
+    }
+  }
 
   useEffect(() => {
     api.getAllGenres()
@@ -132,7 +155,21 @@ export default function CategoryManager({ customFields = [], artistId, adminToke
         <div className="modal-body">
           {error && <div style={{ color: '#b91c1c', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
-
+          {/* ── Display Options ── */}
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Display Options</h3>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 4 }}>
+            <input
+              type="checkbox"
+              checked={showLocation}
+              disabled={savingDisplay}
+              onChange={toggleShowLocation}
+              style={{ width: 16, height: 16 }}
+            />
+            <span style={{ fontSize: 14 }}>Show Current Location on thumbnail page (if not blank)</span>
+          </label>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+            Displays each piece's "Current Location" field on the grid, not just in the detail view.
+          </p>
 
           {divider}
 
