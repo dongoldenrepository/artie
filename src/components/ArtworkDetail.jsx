@@ -1,16 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { imgSrc, api } from '../utils/api'
+import { imgSrc, api, keySupportsAlpha } from '../utils/api'
 import MetadataPanel from './MetadataPanel'
 import BackgroundColorPicker from './BackgroundColorPicker'
-
-// File types that can carry an alpha channel — only these are offered the
-// background-color picker, per the "only if the format accommodates
-// transparency" requirement.
-const ALPHA_EXTS = new Set(['png', 'webp', 'gif'])
-function keySupportsAlpha(key) {
-  const ext = key?.split('.').pop()?.toLowerCase()
-  return ALPHA_EXTS.has(ext)
-}
 
 export default function ArtworkDetail({
   artwork, allArtworks, existingTitles = [], isAdmin, adminToken,
@@ -203,7 +194,7 @@ export default function ArtworkDetail({
           {activeSrc
             ? (
               <div
-                className={`detail-image-backdrop${activeBgColor ? '' : ' checkerboard-bg'}`}
+                className={`detail-image-backdrop${activeBgColor ? '' : (activeCanHaveAlpha ? ' checkerboard-bg' : '')}`}
                 style={activeBgColor ? { backgroundColor: activeBgColor } : undefined}
                 onContextMenu={e => {
                   if (!isAdmin || !activeCanHaveAlpha) return

@@ -225,3 +225,14 @@ export function imgSrc(key) {
   if (key.startsWith('http')) return key
   return `/api/images/${key}`
 }
+
+// Only these file formats can actually carry an alpha channel. A JPEG (or
+// any other opaque format) can never show a transparent area, so the
+// checkerboard "transparency" backdrop should never be applied to one —
+// showing it anyway is just visual noise, most noticeably as a flash
+// behind lazy-loaded thumbnails before the image itself paints.
+const ALPHA_EXTS = new Set(['png', 'webp', 'gif'])
+export function keySupportsAlpha(key) {
+  const ext = key?.split('.').pop()?.toLowerCase()
+  return ALPHA_EXTS.has(ext)
+}

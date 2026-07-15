@@ -1,4 +1,4 @@
-import { imgSrc } from '../utils/api'
+import { imgSrc, keySupportsAlpha } from '../utils/api'
 
 export default function ArtworkCard({
   artwork, isAdmin, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, isDragging,
@@ -12,6 +12,7 @@ export default function ArtworkCard({
   }
 
   const src = imgSrc(artwork.image_key)
+  const canHaveAlpha = keySupportsAlpha(artwork.image_key)
 
   // Printable if any medium tag is Photography, Digital Creation, or Printmaking
   const PRINTABLE_MEDIUMS = ['Photography', 'Digital Creation', 'Printmaking']
@@ -50,7 +51,7 @@ export default function ArtworkCard({
         {src
           ? (
             <div
-              className={`img-backdrop${artwork.background_color ? '' : ' checkerboard-bg'}`}
+              className={`img-backdrop${artwork.background_color ? '' : (canHaveAlpha ? ' checkerboard-bg' : '')}`}
               style={artwork.background_color ? { backgroundColor: artwork.background_color } : undefined}
             >
               <img src={src} alt={artwork.title} loading="lazy" />
